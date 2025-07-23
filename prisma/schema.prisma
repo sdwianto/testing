@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider  = "postgresql"
+    directUrl = env("DIRECT_URL") // untuk sync ke db supabase
+    url       = env("DATABASE_URL") // untuk query
+}
+
+model Category {
+    id String @id @default(uuid())
+
+    name         String
+    productCount Int    @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    products Product[]
+}
+
+model Product {
+    id String @id @default(uuid())
+
+    name     String
+    price    Int
+    imageUrl String?
+
+    category   Category @relation(fields: [categoryId], references: [id])
+    categoryId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    orderItems OrderItem[]
+}
+
+model Order {
+    id String @id @default(uuid())
+
+    subtotal   Int
+    tax        Int
+    grandTotal Int
+
+    // payment gateway fields
+    externalTransactionId String?
+    paymentMethodId       String?
+
+    status OrderStatus @default(AWAITING_PAYMENT)
+
+    paidAt    DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    orderItems OrderItem[]
+}
+
+enum OrderStatus {
+    AWAITING_PAYMENT
+    PROCESSING
+    DONE
+}
+
+model OrderItem {
+    id        String @id @default(uuid())
+    productId String
+    orderId   String
+
+    product Product @relation(fields: [productId], references: [id])
+    order   Order   @relation(fields: [orderId], references: [id])
+
+    price    Int
+    quantity Int
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  name       String
+  createdAt  DateTime @default(now())
+
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+}
+
+model User {
+  id    String  @id @default(uuid())
+  name  String
+
+  posts Post[]
+}
