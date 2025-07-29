@@ -8,6 +8,7 @@ import type { NextPage } from "next";
 import { type AppProps } from "next/app";
 import { Outfit } from "next/font/google";
 import type { ReactElement, ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -23,6 +24,12 @@ type AppPropsWithLayout = AppProps & {
 
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? ((page) => page);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fallback jika environment variable tidak ada
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
@@ -44,6 +51,18 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
               <li>• DATABASE_URL</li>
             </ul>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className={`${outfit.className} flex h-screen w-screen items-center justify-center bg-gray-50 dark:bg-gray-900`}>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Simple POS</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
