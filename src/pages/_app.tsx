@@ -27,15 +27,23 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   // Fallback jika environment variable tidak ada
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 
-  // Jika tidak ada publishable key, tampilkan error message
+  // Jika tidak ada publishable key, tampilkan halaman sederhana
   if (!publishableKey) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className={`${outfit.className} flex h-screen w-screen items-center justify-center bg-gray-50 dark:bg-gray-900`}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">Configuration Error</h1>
-          <p className="mt-2 text-gray-600">
-            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not configured
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Simple POS</h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Configuration Error: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing
           </p>
+          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            <p>Please check your environment variables in Vercel:</p>
+            <ul className="mt-2 space-y-1">
+              <li>• NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</li>
+              <li>• CLERK_SECRET_KEY</li>
+              <li>• DATABASE_URL</li>
+            </ul>
+          </div>
         </div>
       </div>
     );
