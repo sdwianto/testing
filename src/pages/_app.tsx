@@ -1,6 +1,6 @@
 // pages/_app.tsx
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "next-themes";
 import "@/styles/globals.css";
 import { api } from "@/utils/api";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -74,7 +74,12 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
     >
-      <ThemeProvider defaultTheme="dark" storageKey="pos-theme">
+      <ThemeProvider 
+        attribute="class" 
+        defaultTheme="dark" 
+        enableSystem={true}
+        disableTransitionOnChange={false}
+      >
         <div className={`${outfit.className}`}>
           {getLayout(<Component {...pageProps} />)}
           <Toaster position="top-right" />

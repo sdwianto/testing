@@ -16,6 +16,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Button } from "../ui/button";
+import { useEffect, useState } from "react";
 
 // Dashboard header component
 interface DashboardHeaderProps {
@@ -67,11 +68,17 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const router = useRouter();
-
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    if (mounted) {
+      setTheme(theme === "dark" ? "light" : "dark");
+    }
   };
 
   return (
@@ -143,8 +150,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <SidebarFooter className="p-4">
             <p className="text-muted-foreground text-xs">Simple POS v1.0</p>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={() => toggleTheme()}>
-                {theme === "dark" ? "Dark Mode" : "Light Mode"}
+              <Button 
+                variant="ghost" 
+                onClick={toggleTheme}
+                disabled={!mounted}
+              >
+                {mounted && theme === "dark" ? "🌙 Dark Mode" : "☀️ Light Mode"}
               </Button>
             </div>
           </SidebarFooter>
