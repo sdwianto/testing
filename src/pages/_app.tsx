@@ -56,13 +56,16 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
     );
   }
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch - show loading state
   if (!mounted) {
     return (
       <div className={`${outfit.className} flex h-screen w-screen items-center justify-center bg-gray-50 dark:bg-gray-900`}>
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Simple POS</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">Loading...</p>
+          <div className="mt-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
         </div>
       </div>
     );

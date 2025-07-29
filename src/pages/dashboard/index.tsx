@@ -144,7 +144,10 @@ DashboardPage.getLayout = function getLayout(page: ReactElement) {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { userId } = getAuth(context.req);
 
-  if (!userId) {
+  // Allow development access when Clerk is not configured
+  const isClerkConfigured = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  
+  if (!userId && isClerkConfigured) {
     return {
       redirect: {
         destination: "/sign-in",
