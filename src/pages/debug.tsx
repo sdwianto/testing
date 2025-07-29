@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function DebugPage() {
-  const [envVars, setEnvVars] = useState<any>({});
+  const [envVars, setEnvVars] = useState<Record<string, string>>({});
   const [clerkLoaded, setClerkLoaded] = useState(false);
 
   useEffect(() => {
     // Check environment variables
     setEnvVars({
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? "✅ Set" : "❌ Not Set",
-      NODE_ENV: process.env.NODE_ENV,
-      NEXT_PUBLIC_CLERK_DISABLE_DEVELOPMENT_WARNING: process.env.NEXT_PUBLIC_CLERK_DISABLE_DEVELOPMENT_WARNING,
+      NODE_ENV: process.env.NODE_ENV ?? "Not Set",
+      NEXT_PUBLIC_CLERK_DISABLE_DEVELOPMENT_WARNING: process.env.NEXT_PUBLIC_CLERK_DISABLE_DEVELOPMENT_WARNING ?? "Not Set",
     });
 
     // Check if Clerk is loaded
     if (typeof window !== "undefined") {
       const checkClerk = () => {
-        if ((window as any).Clerk) {
+        const windowWithClerk = window as Window & { Clerk?: unknown };
+        if (windowWithClerk.Clerk) {
           setClerkLoaded(true);
         } else {
           setTimeout(checkClerk, 100);
@@ -40,7 +42,7 @@ export default function DebugPage() {
               {Object.entries(envVars).map(([key, value]) => (
                 <div key={key} className="flex justify-between">
                   <span className="font-mono text-sm">{key}:</span>
-                  <span className="font-mono text-sm">{String(value)}</span>
+                  <span className="font-mono text-sm">{value}</span>
                 </div>
               ))}
             </div>
@@ -82,18 +84,18 @@ export default function DebugPage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Navigation</h2>
             <div className="space-x-4">
-              <a 
+              <Link 
                 href="/"
                 className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
               >
                 Go to Home
-              </a>
-              <a 
+              </Link>
+              <Link 
                 href="/test"
                 className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
               >
                 Go to Test Page
-              </a>
+              </Link>
             </div>
           </div>
         </div>
