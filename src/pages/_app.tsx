@@ -24,9 +24,26 @@ type AppPropsWithLayout = AppProps & {
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? ((page) => page);
 
+  // Fallback jika environment variable tidak ada
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+
+  // Jika tidak ada publishable key, tampilkan error message
+  if (!publishableKey) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">Configuration Error</h1>
+          <p className="mt-2 text-gray-600">
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not configured
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ClerkProvider 
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={publishableKey}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
     >
