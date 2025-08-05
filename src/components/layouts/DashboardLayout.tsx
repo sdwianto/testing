@@ -1,4 +1,18 @@
-import { BarChart3, Grid3X3, Package, ShoppingCart } from "lucide-react";
+import { 
+  BarChart3, 
+  Package, 
+  Users, 
+  Building2, 
+  DollarSign, 
+  Settings,
+  Truck,
+  Activity,
+  TrendingUp,
+  PieChart,
+  Shield,
+  Database,
+  Cloud
+} from "lucide-react";
 import React, { type ReactNode } from "react";
 
 import {
@@ -14,8 +28,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useTheme } from "next-themes";
-import { Button } from "../ui/button";
+import { ThemeToggle } from "../ThemeToggle";
 import { useEffect, useState } from "react";
 
 // Dashboard header component
@@ -68,17 +81,10 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
-  const toggleTheme = () => {
-    if (mounted) {
-      setTheme(theme === "dark" ? "light" : "dark");
-    }
+  const isActive = (path: string) => {
+    return router.pathname.startsWith(path);
   };
 
   return (
@@ -86,19 +92,22 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className="flex h-screen w-full">
         <Sidebar>
           <SidebarHeader className="p-4">
-            <h2 className="text-xl font-bold">Simple POS</h2>
+            <h2 className="text-xl font-bold">NextGen ERP</h2>
+            <p className="text-xs text-muted-foreground">Enterprise Resource Planning</p>
           </SidebarHeader>
           <SidebarContent className="px-4">
+            
+            {/* Main Dashboard */}
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Create Order"
-                  isActive={router.pathname.includes("/dashboard")}
+                  tooltip="Dashboard"
+                  isActive={isActive("/dashboard")}
                 >
                   <Link href="/dashboard">
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Create Order
+                    <Activity className="mr-2 h-4 w-4" />
+                    Dashboard
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -106,16 +115,50 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
             <SidebarSeparator className="my-2" />
 
+            {/* Operations */}
+            <SidebarMenu>
+
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Inventory Management"
+                  isActive={isActive("/inventory")}
+                >
+                  <Link href="/inventory">
+                    <Package className="mr-2 h-4 w-4" />
+                    Inventory
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Rental & Maintenance"
+                  isActive={isActive("/rental")}
+                >
+                  <Link href="/rental">
+                    <Truck className="mr-2 h-4 w-4" />
+                    Rental & Maintenance
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
+            <SidebarSeparator className="my-2" />
+
+            {/* Business Management */}
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Category Management"
-                  isActive={router.pathname.includes("/categories")}
+                  tooltip="Finance & Accounting"
+                  isActive={isActive("/finance")}
                 >
-                  <Link href="/categories">
-                    <Grid3X3 className="mr-2 h-4 w-4" />
-                    Category Management
+                  <Link href="/finance">
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Finance
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -123,12 +166,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Product Management"
-                  isActive={router.pathname.includes("/products")}
+                  tooltip="Human Resources"
+                  isActive={isActive("/hrms")}
                 >
-                  <Link href="/products">
-                    <Package className="mr-2 h-4 w-4" />
-                    Product Management
+                  <Link href="/hrms">
+                    <Users className="mr-2 h-4 w-4" />
+                    HRMS
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -136,27 +179,123 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Sales Dashboard"
-                  isActive={router.pathname.includes("/sales")}
+                  tooltip="Customer Management"
+                  isActive={isActive("/crm")}
                 >
-                  <Link href="/sales">
+                  <Link href="/crm">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    CRM
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
+            <SidebarSeparator className="my-2" />
+
+            {/* Analytics & Reports */}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Reports & Analytics"
+                  isActive={isActive("/reports")}
+                >
+                  <Link href="/reports">
                     <BarChart3 className="mr-2 h-4 w-4" />
-                    Sales Dashboard
+                    Reports
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Business Intelligence"
+                  isActive={isActive("/bi")}
+                >
+                  <Link href="/bi">
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Business Intelligence
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Data Analytics"
+                  isActive={isActive("/analytics")}
+                >
+                  <Link href="/analytics">
+                    <PieChart className="mr-2 h-4 w-4" />
+                    Analytics
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
+            <SidebarSeparator className="my-2" />
+
+            {/* System */}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="User Management"
+                  isActive={isActive("/users")}
+                >
+                  <Link href="/users">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Users & Roles
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="System Settings"
+                  isActive={isActive("/settings")}
+                >
+                  <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Data Management"
+                  isActive={isActive("/data")}
+                >
+                  <Link href="/data">
+                    <Database className="mr-2 h-4 w-4" />
+                    Data Management
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Offline Sync"
+                  isActive={isActive("/sync")}
+                >
+                  <Link href="/sync">
+                    <Cloud className="mr-2 h-4 w-4" />
+                    Offline Sync
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4">
-            <p className="text-muted-foreground text-xs">Simple POS v1.0</p>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                onClick={toggleTheme}
-                disabled={!mounted}
-              >
-                {mounted && theme === "dark" ? "🌙 Dark Mode" : "☀️ Light Mode"}
-              </Button>
+            <p className="text-muted-foreground text-xs">NextGen ERP v1.0</p>
+            <p className="text-muted-foreground text-xs">Papua New Guinea</p>
+            <div className="flex items-center gap-2 mt-2">
+              <ThemeToggle />
             </div>
           </SidebarFooter>
         </Sidebar>

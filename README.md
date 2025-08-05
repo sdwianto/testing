@@ -1,25 +1,36 @@
-# Simple POS (Point of Sale) System
+# NextGen ERP System
 
-A modern, full-stack Point of Sale (POS) system built with Next.js, TypeScript, and Prisma. This application provides a complete solution for managing products, categories, orders, and sales with a beautiful, responsive UI.
+A comprehensive Enterprise Resource Planning (ERP) system built for NextGen Technology Limited, Papua New Guinea. This modern, full-stack ERP solution provides complete business management capabilities with offline support, real-time analytics, and modular architecture.
 
 ## 🚀 Features
 
-### Core Functionality
-- **Product Management**: Create, edit, and delete products with image uploads
-- **Category Management**: Organize products by categories
-- **Order Processing**: Create orders with cart functionality
-- **Sales Dashboard**: Track sales performance and analytics
-- **Payment Integration**: Xendit payment gateway integration
-- **QR Code Generation**: Generate QR codes for payments
+### Core ERP Modules
+- **Dashboard & Analytics**: Real-time KPI monitoring, business intelligence, and performance metrics
+- **Inventory & Procurement**: Multi-warehouse inventory management, purchase orders, supplier management
+- **Equipment & Rental**: Heavy equipment tracking, rental management, maintenance scheduling
+- **Finance & Accounting**: General ledger, accounts payable/receivable, financial reporting
+- **HRMS & Payroll**: Employee management, attendance tracking, payroll processing
+- **CRM**: Customer relationship management, contact tracking, sales pipeline
+- **Sales & Orders**: Order processing, customer management, payment integration
+
+### Advanced Features
+- **Offline Capability**: PouchDB integration for offline data entry and sync
+- **Real-time Updates**: WebSocket integration for live dashboard updates
+- **Role-based Access Control**: Granular permissions and security
+- **Multi-warehouse Support**: Distributed inventory management
+- **Equipment Maintenance**: Preventive and corrective maintenance tracking
+- **Business Intelligence**: Advanced reporting and analytics
+- **Audit Trail**: Complete system activity logging
 
 ### Technical Features
-- **Authentication**: Clerk authentication system
+- **Authentication**: Clerk authentication with role-based access
 - **Database**: PostgreSQL with Prisma ORM
 - **Real-time Updates**: tRPC for type-safe API calls
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
 - **Theme Support**: Dark/light mode toggle
 - **Form Validation**: Zod schema validation
-- **State Management**: Zustand for cart management
+- **State Management**: Zustand for application state
+- **Offline Sync**: PouchDB + CouchDB for offline capabilities
 
 ## 🛠️ Tech Stack
 
@@ -32,6 +43,11 @@ A modern, full-stack Point of Sale (POS) system built with Next.js, TypeScript, 
 - **API**: tRPC
 - **Forms**: React Hook Form with Zod validation
 - **UI Components**: Custom components with Radix UI primitives
+- **Offline Sync**: PouchDB, CouchDB
+- **Real-time**: Socket.io
+- **Charts**: Recharts
+- **Tables**: TanStack Table
+- **File Handling**: React Dropzone, PDF generation
 
 ## 📋 Prerequisites
 
@@ -49,7 +65,7 @@ Before running this project, make sure you have:
 
 ```bash
 git clone <repository-url>
-cd mySimplePOS
+cd nextgen-erp
 ```
 
 ### 2. Install Dependencies
@@ -64,8 +80,8 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # Database
-DATABASE_URL="postgresql://username:password@localhost:5432/simple_pos"
-DIRECT_URL="postgresql://username:password@localhost:5432/simple_pos"
+DATABASE_URL="postgresql://username:password@localhost:5432/nextgen_erp"
+DIRECT_URL="postgresql://username:password@localhost:5432/nextgen_erp"
 
 # Authentication (Clerk)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
@@ -79,6 +95,11 @@ XENDIT_CALLBACK_TOKEN=your_xendit_callback_token
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Offline Sync (CouchDB)
+COUCHDB_URL=your_couchdb_url
+COUCHDB_USERNAME=your_couchdb_username
+COUCHDB_PASSWORD=your_couchdb_password
 ```
 
 ### 4. Database Setup
@@ -89,6 +110,9 @@ npm run db:generate
 
 # Push schema to database
 npm run db:push
+
+# Seed the database with initial data
+npm run db:seed
 
 # (Optional) Open Prisma Studio
 npm run db:studio
@@ -105,50 +129,98 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 ## 📁 Project Structure
 
 ```
-mySimplePOS/
+nextgen-erp/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── layouts/        # Layout components
 │   │   ├── shared/         # Shared components
-│   │   └── ui/            # Base UI components
+│   │   ├── ui/            # Base UI components
+│   │   └── modules/       # ERP module components
 │   ├── pages/             # Next.js pages
 │   │   ├── api/           # API routes
-│   │   ├── dashboard/     # Dashboard pages
-│   │   ├── products/      # Product management
-│   │   └── sales/         # Sales dashboard
+│   │   ├── dashboard/     # Main dashboard
+│   │   ├── inventory/     # Inventory management
+│   │   ├── equipment/     # Equipment & rental
+│   │   ├── finance/       # Finance & accounting
+│   │   ├── hrms/          # HR & payroll
+│   │   ├── crm/           # Customer management
+│   │   ├── sales/         # Sales & orders
+│   │   ├── reports/       # Reports & analytics
+│   │   └── settings/      # System settings
 │   ├── server/            # tRPC server setup
 │   │   └── api/           # API routers
 │   ├── store/             # State management
 │   ├── utils/             # Utility functions
-│   └── forms/             # Form schemas
+│   ├── forms/             # Form schemas
+│   └── hooks/             # Custom hooks
 ├── prisma/                # Database schema
 └── public/                # Static assets
 ```
 
-## 🎯 Key Pages
+## 🎯 Key Pages & Modules
 
 ### Dashboard (`/dashboard`)
-- Main POS interface
-- Product catalog with search and filtering
-- Shopping cart functionality
-- Category-based product filtering
+- Real-time KPI monitoring
+- Business intelligence widgets
+- Recent activities feed
+- Quick action buttons
+- Upcoming events calendar
 
-### Products (`/products`)
-- Product management interface
-- Create, edit, and delete products
-- Image upload functionality
-- Category assignment
+### Inventory (`/inventory`)
+- Multi-warehouse inventory management
+- Stock level monitoring
+- Purchase order management
+- Supplier management
+- Inventory transactions
 
-### Categories (`/categories`)
-- Category management
-- Create and edit categories
-- Product count tracking
+### Equipment (`/equipment`)
+- Equipment tracking and management
+- Rental order processing
+- Equipment status monitoring
+- Location tracking
+- Utilization analytics
+
+### Maintenance (`/maintenance`)
+- Preventive maintenance scheduling
+- Corrective maintenance tracking
+- Maintenance history
+- Parts management
+- Cost tracking
+
+### Finance (`/finance`)
+- General ledger management
+- Accounts payable/receivable
+- Financial transactions
+- Chart of accounts
+- Financial reporting
+
+### HRMS (`/hrms`)
+- Employee management
+- Attendance tracking
+- Leave management
+- Payroll processing
+- Performance tracking
+
+### CRM (`/crm`)
+- Customer management
+- Contact tracking
+- Sales pipeline
+- Customer interactions
+- Lead management
 
 ### Sales (`/sales`)
-- Sales analytics dashboard
-- Order tracking and management
-- Revenue reporting
-- Order status management
+- Order processing
+- Customer management
+- Payment integration
+- Order tracking
+- Sales analytics
+
+### Reports (`/reports`)
+- Business intelligence dashboards
+- Custom report generation
+- Data analytics
+- Performance metrics
+- Export capabilities
 
 ## 🔧 Available Scripts
 
@@ -161,32 +233,71 @@ mySimplePOS/
 - `npm run format:write` - Format code with Prettier
 - `npm run db:generate` - Generate Prisma client
 - `npm run db:push` - Push schema to database
+- `npm run db:seed` - Seed database with initial data
 - `npm run db:studio` - Open Prisma Studio
 
 ## 🗄️ Database Schema
 
-The application uses the following main models:
+The ERP system uses a comprehensive database schema with the following main modules:
 
+### Core System
 - **User**: Authentication and user management
-- **Category**: Product categories
-- **Product**: Products with pricing and images
-- **Order**: Order management with payment status
-- **OrderItem**: Individual items in orders
+- **Role**: Role-based access control
+- **Department**: Organizational structure
+- **AuditLog**: System activity logging
 
-## 🔐 Authentication
+### Inventory & Procurement
+- **Category**: Product categorization
+- **Product**: Product master data
+- **Warehouse**: Multi-warehouse support
+- **InventoryItem**: Stock levels per warehouse
+- **InventoryTransaction**: Stock movements
+- **PurchaseOrder**: Procurement management
+- **Supplier**: Supplier master data
 
-The application uses Clerk for authentication. Users can:
-- Sign up with email/password
-- Sign in with various providers
-- Access protected routes
-- Manage their profile
+### Equipment & Maintenance
+- **Equipment**: Equipment master data
+- **MaintenanceRecord**: Maintenance history
+- **RentalOrder**: Equipment rental management
+
+### Finance & Accounting
+- **FinancialTransaction**: Financial transactions
+- **Account**: Chart of accounts
+
+### HRMS & Payroll
+- **Employee**: Employee master data
+- **AttendanceRecord**: Attendance tracking
+- **LeaveRequest**: Leave management
+- **PayrollRecord**: Payroll processing
+
+### CRM
+- **Customer**: Customer master data
+- **CustomerContact**: Customer interactions
+
+### Sales & Orders
+- **Order**: Sales order management
+- **OrderItem**: Order line items
+
+### Offline Sync
+- **SyncLog**: Offline synchronization tracking
+
+## 🔐 Authentication & Security
+
+The application uses Clerk for authentication with:
+- Role-based access control (RBAC)
+- Granular permissions per module
+- Audit trail for all activities
+- Multi-factor authentication support
+- Session management
 
 ## 💳 Payment Integration
 
 The system integrates with Xendit for payment processing:
-- QR code generation for payments
-- Webhook handling for payment status updates
-- Multiple payment method support
+- Multiple payment methods
+- QR code generation
+- Webhook handling
+- Payment status tracking
+- Receipt generation
 
 ## 🎨 UI/UX Features
 
@@ -196,6 +307,17 @@ The system integrates with Xendit for payment processing:
 - **Loading States**: Skeleton loaders and loading indicators
 - **Toast Notifications**: User feedback for actions
 - **Form Validation**: Real-time validation with error messages
+- **Data Tables**: Sortable, filterable data tables
+- **Charts & Graphs**: Business intelligence visualizations
+
+## 🔄 Offline Capability
+
+The ERP system supports offline operation:
+- **PouchDB**: Local data storage on client devices
+- **CouchDB**: Server-side sync database
+- **Conflict Resolution**: Automatic conflict handling
+- **Auto-sync**: Automatic synchronization when online
+- **Data Integrity**: Ensures data consistency
 
 ## 🚀 Deployment
 
@@ -206,6 +328,16 @@ The system integrates with Xendit for payment processing:
 3. Add environment variables in Vercel dashboard
 4. Deploy
 
+### Docker Deployment
+
+```bash
+# Build the Docker image
+docker build -t nextgen-erp .
+
+# Run the container
+docker run -p 3000:3000 nextgen-erp
+```
+
 ### Other Platforms
 
 The application can be deployed to any platform that supports Next.js:
@@ -213,6 +345,7 @@ The application can be deployed to any platform that supports Next.js:
 - Railway
 - DigitalOcean App Platform
 - AWS Amplify
+- Google Cloud Run
 
 ## 🤝 Contributing
 
@@ -236,12 +369,15 @@ If you encounter any issues or have questions:
 
 ## 🔄 Version History
 
-- **v0.1.0** - Initial release with core POS functionality
-  - Product and category management
-  - Order processing
-  - Sales dashboard
-  - Payment integration
+- **v1.0.0** - Initial ERP release
+  - Complete ERP modules (Inventory, Equipment, Finance, HRMS, CRM)
+  - Offline capability with PouchDB/CouchDB
+  - Real-time dashboard and analytics
+  - Role-based access control
+  - Multi-warehouse support
+  - Equipment maintenance tracking
+  - Business intelligence features
 
 ---
 
-Built with ❤️ using Next.js, TypeScript, and modern web technologies. 
+Built with ❤️ for NextGen Technology Limited, Papua New Guinea using Next.js, TypeScript, and modern web technologies. 

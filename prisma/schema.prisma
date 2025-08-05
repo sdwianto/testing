@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file for NextGen ERP System
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -7,88 +7,864 @@ generator client {
 
 datasource db {
     provider  = "postgresql"
-    directUrl = env("DIRECT_URL") // untuk sync ke db supabase
     url       = env("DATABASE_URL") // untuk query
+    directUrl = env("DIRECT_URL") // untuk sync ke db supabase (optional)
 }
 
+// ========================================
+// CORE SYSTEM & SECURITY
+// ========================================
+
+model User {
+    id                String   @id @default(uuid())
+    clerkId           String   @unique // External Clerk ID
+    email             String   @unique
+    firstName         String
+    lastName          String
+    phone             String?
+    avatar            String?
+    isActive          Boolean  @default(true)
+    lastLoginAt       DateTime?
+    
+    // Role-based access control
+    roleId            String
+    role              Role     @relation(fields: [roleId], references: [id])
+    
+    // Department assignment
+    departmentId      String?
+    department        Department? @relation(fields: [departmentId], references: [id])
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    posts             Post[]
+    auditLogs         AuditLog[]
+    createdOrders     Order[]  @relation("OrderCreator")
+    approvedOrders    Order[]  @relation("OrderApprover")
+    maintenanceRecords MaintenanceRecord[]
+    inventoryTransactions InventoryTransaction[]
+    financialTransactions FinancialTransaction[]
+    employeeRecords   Employee[]
+    customerContacts  CustomerContact[]
+}
+
+model Role {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    description       String?
+    permissions       Json     // Array of permission strings
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    users             User[]
+}
+
+model Department {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    code              String   @unique
+    description       String?
+    managerId         String?
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    users             User[]
+    employees         Employee[]
+}
+
+model AuditLog {
+    id                String   @id @default(uuid())
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    action            String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+    entityType        String   // User, Product, Order, etc.
+    entityId          String?
+    oldValues         Json?
+    newValues         Json?
+    ipAddress         String?
+    userAgent         String?
+    createdAt         DateTime @default(now())
+}
+
+// ========================================
+// INVENTORY & PROCUREMENT
+// ========================================
+
 model Category {
-    id String @id @default(uuid())
-
-    name         String
-    productCount Int    @default(0)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    products Product[]
+    id                String   @id @default(uuid())
+    name              String   @unique
+    code              String   @unique
+    description       String?
+    parentId          String?
+    parent            Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+    children          Category[] @relation("CategoryHierarchy")
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    products          Product[]
+    equipment         Equipment[]
 }
 
 model Product {
-    id String @id @default(uuid())
-
-    name     String
-    price    Int
-    imageUrl String?
-
-    category   Category @relation(fields: [categoryId], references: [id])
-    categoryId String
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    orderItems OrderItem[]
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    description       String?
+    sku               String   @unique
+    barcode           String?
+    price             Int      // Price in cents
+    costPrice         Int      // Cost price in cents
+    imageUrl          String?
+    
+    // Inventory fields
+    minStockLevel     Int      @default(0)
+    maxStockLevel     Int?
+    currentStock      Int      @default(0)
+    unitOfMeasure     String   @default("PCS")
+    
+    // Category relation
+    categoryId        String
+    category          Category @relation(fields: [categoryId], references: [id])
+    
+    // Status
+    isActive          Boolean  @default(true)
+    isService         Boolean  @default(false) // For service-based products
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    orderItems        OrderItem[]
+    inventoryItems    InventoryItem[]
+    inventoryTransactions InventoryTransaction[]
+    purchaseOrderItems PurchaseOrderItem[]
 }
 
-model Order {
-    id String @id @default(uuid())
+model Warehouse {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    code              String   @unique
+    address           String?
+    contactPerson     String?
+    phone             String?
+    email             String?
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    inventoryItems    InventoryItem[]
+    inventoryTransactions InventoryTransaction[]
+}
 
-    subtotal   Int
-    tax        Int
-    grandTotal Int
+model InventoryItem {
+    id                String   @id @default(uuid())
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    warehouseId       String
+    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
+    quantity          Int      @default(0)
+    reservedQuantity  Int      @default(0) // For pending orders
+    availableQuantity Int      @default(0) // quantity - reservedQuantity
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@unique([productId, warehouseId])
+}
 
-    // payment gateway fields
+model InventoryTransaction {
+    id                String   @id @default(uuid())
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    warehouseId       String
+    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    transactionType   InventoryTransactionType
+    quantity          Int
+    referenceType     String?  // Order, PurchaseOrder, Adjustment, etc.
+    referenceId       String?
+    notes             String?
+    
+    createdAt         DateTime @default(now())
+}
+
+enum InventoryTransactionType {
+    IN
+    OUT
+    ADJUSTMENT
+    TRANSFER
+}
+
+model PurchaseOrder {
+    id                String   @id @default(uuid())
+    poNumber          String   @unique
+    supplierId        String
+    supplier          Supplier @relation(fields: [supplierId], references: [id])
+    
+    orderDate         DateTime
+    expectedDeliveryDate DateTime?
+    deliveryDate      DateTime?
+    
+    subtotal          Int      @default(0)
+    tax               Int      @default(0)
+    discount          Int      @default(0)
+    grandTotal        Int      @default(0)
+    
+    status            PurchaseOrderStatus @default(DRAFT)
+    notes             String?
+    
+    // Audit fields
+    createdBy         String?
+    approvedBy        String?
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    items             PurchaseOrderItem[]
+}
+
+enum PurchaseOrderStatus {
+    DRAFT
+    SUBMITTED
+    APPROVED
+    ORDERED
+    PARTIALLY_RECEIVED
+    RECEIVED
+    CANCELLED
+}
+
+model PurchaseOrderItem {
+    id                String   @id @default(uuid())
+    purchaseOrderId   String
+    purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    
+    quantity          Int
+    unitPrice         Int
+    totalPrice        Int
+    receivedQuantity  Int      @default(0)
+    
+    createdAt         DateTime @default(now())
+}
+
+model Supplier {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    contactPerson     String?
+    email             String?
+    phone             String?
+    address           String?
+    taxNumber         String?
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    purchaseOrders    PurchaseOrder[]
+}
+
+// ========================================
+// RENTAL & MAINTENANCE
+// ========================================
+
+model Equipment {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    model             String?
+    serialNumber      String?  @unique
+    manufacturer      String?
+    yearManufactured  Int?
+    
+    // Equipment details
+    categoryId        String
+    category          Category @relation(fields: [categoryId], references: [id])
+    
+    purchaseDate      DateTime?
+    purchasePrice     Int?
+    currentValue      Int?
+    
+    // Status
+    status            EquipmentStatus @default(AVAILABLE)
+    location          String?
+    assignedTo        String?
+    
+    // Maintenance
+    lastMaintenanceDate DateTime?
+    nextMaintenanceDate DateTime?
+    totalOperatingHours Int @default(0)
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    maintenanceRecords MaintenanceRecord[]
+    rentalOrderItems  RentalOrderItem[]
+}
+
+enum EquipmentStatus {
+    AVAILABLE
+    IN_USE
+    MAINTENANCE
+    REPAIR
+    RETIRED
+    LOST
+}
+
+model MaintenanceRecord {
+    id                String   @id @default(uuid())
+    equipmentId       String
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    maintenanceType   MaintenanceType
+    description       String
+    cost              Int?
+    startDate         DateTime
+    endDate           DateTime?
+    status            MaintenanceStatus @default(SCHEDULED)
+    
+    // Parts used
+    partsUsed         Json?    // Array of parts with quantities
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum MaintenanceType {
+    PREVENTIVE
+    CORRECTIVE
+    EMERGENCY
+    INSPECTION
+}
+
+enum MaintenanceStatus {
+    SCHEDULED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model RentalOrder {
+    id                String   @id @default(uuid())
+    rentalNumber      String   @unique
+    customerId        String
+    customer          Customer @relation(fields: [customerId], references: [id])
+    
+    startDate         DateTime
+    endDate           DateTime
+    actualReturnDate  DateTime?
+    
+    dailyRate         Int
+    totalDays         Int
+    subtotal          Int
+    tax               Int      @default(0)
+    grandTotal        Int
+    
+    status            RentalOrderStatus @default(DRAFT)
+    notes             String?
+    
+    // Audit fields
+    createdBy         String?
+    approvedBy        String?
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    items             RentalOrderItem[]
+}
+
+enum RentalOrderStatus {
+    DRAFT
+    CONFIRMED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model RentalOrderItem {
+    id                String   @id @default(uuid())
+    rentalOrderId     String
+    rentalOrder       RentalOrder @relation(fields: [rentalOrderId], references: [id])
+    equipmentId       String
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    dailyRate         Int
+    quantity          Int      @default(1)
+    totalPrice        Int
+    
+    createdAt         DateTime @default(now())
+}
+
+// ========================================
+// FINANCE & ACCOUNTING
+// ========================================
+
+model FinancialTransaction {
+    id                String   @id @default(uuid())
+    transactionNumber String   @unique
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    transactionType   FinancialTransactionType
+    amount            Int      // Amount in cents
+    currency          String   @default("IDR")
+    
+    // Reference to related entity
+    referenceType     String?  // Order, PurchaseOrder, RentalOrder, etc.
+    referenceId       String?
+    
+    // Account mapping
+    debitAccount      String?
+    creditAccount     String?
+    
+    description       String
+    transactionDate   DateTime
+    status            FinancialTransactionStatus @default(PENDING)
+    
+    // Payment details
+    paymentMethod     String?
     externalTransactionId String?
-    paymentMethodId       String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
 
-    status OrderStatus @default(AWAITING_PAYMENT)
+enum FinancialTransactionType {
+    SALE
+    PURCHASE
+    RENTAL_INCOME
+    MAINTENANCE_EXPENSE
+    SALARY_EXPENSE
+    UTILITY_EXPENSE
+    OTHER_INCOME
+    OTHER_EXPENSE
+}
 
-    paidAt    DateTime?
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+enum FinancialTransactionStatus {
+    PENDING
+    COMPLETED
+    CANCELLED
+    VOID
+}
 
-    orderItems OrderItem[]
+model Account {
+    id                String   @id @default(uuid())
+    accountNumber     String   @unique
+    name              String
+    type              AccountType
+    parentAccountId   String?
+    parentAccount     Account? @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
+    childAccounts     Account[] @relation("AccountHierarchy")
+    
+    balance           Int      @default(0)
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum AccountType {
+    ASSET
+    LIABILITY
+    EQUITY
+    REVENUE
+    EXPENSE
+}
+
+// ========================================
+// HRMS & PAYROLL
+// ========================================
+
+model Employee {
+    id                String   @id @default(uuid())
+    employeeNumber    String   @unique
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    // Personal information
+    firstName         String
+    lastName          String
+    email             String   @unique
+    phone             String?
+    address           String?
+    dateOfBirth       DateTime?
+    gender            Gender?
+    maritalStatus     MaritalStatus?
+    
+    // Employment details
+    departmentId      String
+    department        Department @relation(fields: [departmentId], references: [id])
+    position          String
+    hireDate          DateTime
+    terminationDate   DateTime?
+    employmentStatus  EmploymentStatus @default(ACTIVE)
+    
+    // Salary information
+    baseSalary        Int      // Monthly salary in cents
+    allowances        Int      @default(0)
+    taxNumber         String?
+    bankAccount       String?
+    
+    // Emergency contact
+    emergencyContactName String?
+    emergencyContactPhone String?
+    emergencyContactRelation String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    attendanceRecords AttendanceRecord[]
+    leaveRequests     LeaveRequest[]
+    payrollRecords    PayrollRecord[]
+}
+
+enum Gender {
+    MALE
+    FEMALE
+    OTHER
+}
+
+enum MaritalStatus {
+    SINGLE
+    MARRIED
+    DIVORCED
+    WIDOWED
+}
+
+enum EmploymentStatus {
+    ACTIVE
+    INACTIVE
+    TERMINATED
+    ON_LEAVE
+}
+
+model AttendanceRecord {
+    id                String   @id @default(uuid())
+    employeeId        String
+    employee          Employee @relation(fields: [employeeId], references: [id])
+    
+    date              DateTime @db.Date
+    checkInTime       DateTime?
+    checkOutTime      DateTime?
+    totalHours        Float?
+    overtimeHours     Float    @default(0)
+    
+    status            AttendanceStatus @default(PRESENT)
+    notes             String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@unique([employeeId, date])
+}
+
+enum AttendanceStatus {
+    PRESENT
+    ABSENT
+    LATE
+    HALF_DAY
+    ON_LEAVE
+    HOLIDAY
+}
+
+model LeaveRequest {
+    id                String   @id @default(uuid())
+    employeeId        String
+    employee          Employee @relation(fields: [employeeId], references: [id])
+    
+    leaveType         LeaveType
+    startDate         DateTime
+    endDate           DateTime
+    totalDays         Int
+    reason            String
+    
+    status            LeaveRequestStatus @default(PENDING)
+    approvedBy        String?
+    approvedAt        DateTime?
+    rejectionReason   String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum LeaveType {
+    ANNUAL_LEAVE
+    SICK_LEAVE
+    PERSONAL_LEAVE
+    MATERNITY_LEAVE
+    PATERNITY_LEAVE
+    UNPAID_LEAVE
+}
+
+enum LeaveRequestStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    CANCELLED
+}
+
+model PayrollRecord {
+    id                String   @id @default(uuid())
+    employeeId        String
+    employee          Employee @relation(fields: [employeeId], references: [id])
+    
+    payPeriod         String   // e.g., "2024-01" for January 2024
+    baseSalary        Int
+    allowances        Int      @default(0)
+    overtimePay       Int      @default(0)
+    deductions        Int      @default(0)
+    netSalary         Int
+    
+    paymentDate       DateTime?
+    paymentMethod     String?
+    status            PayrollStatus @default(PENDING)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@unique([employeeId, payPeriod])
+}
+
+enum PayrollStatus {
+    PENDING
+    PROCESSED
+    PAID
+    CANCELLED
+}
+
+// ========================================
+// CRM
+// ========================================
+
+model Customer {
+    id                String   @id @default(uuid())
+    customerNumber    String   @unique
+    name              String
+    type              CustomerType @default(INDIVIDUAL)
+    
+    // Contact information
+    email             String?
+    phone             String?
+    address           String?
+    city              String?
+    state             String?
+    postalCode        String?
+    country           String?  @default("Indonesia")
+    
+    // Business information
+    companyName       String?
+    taxNumber         String?
+    industry          String?
+    
+    // Status
+    status            CustomerStatus @default(ACTIVE)
+    source            String?  // How they found us
+    notes             String?
+    
+    // Credit information
+    creditLimit       Int      @default(0)
+    currentBalance    Int      @default(0)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    contacts          CustomerContact[]
+    orders            Order[]
+    rentalOrders      RentalOrder[]
+}
+
+enum CustomerType {
+    INDIVIDUAL
+    COMPANY
+    GOVERNMENT
+}
+
+enum CustomerStatus {
+    ACTIVE
+    INACTIVE
+    PROSPECT
+    LEAD
+}
+
+model CustomerContact {
+    id                String   @id @default(uuid())
+    customerId        String
+    customer          Customer @relation(fields: [customerId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    contactType       ContactType
+    contactDate       DateTime
+    summary           String
+    details           String?
+    followUpDate      DateTime?
+    status            ContactStatus @default(OPEN)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum ContactType {
+    PHONE_CALL
+    EMAIL
+    MEETING
+    VISIT
+    OTHER
+}
+
+enum ContactStatus {
+    OPEN
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+// ========================================
+// SALES & ORDERS (Enhanced from original)
+// ========================================
+
+model Order {
+    id                String   @id @default(uuid())
+    orderNumber       String   @unique
+    
+    // Customer information
+    customerId        String
+    customer          Customer @relation(fields: [customerId], references: [id])
+    
+    // Order details
+    orderDate         DateTime
+    expectedDeliveryDate DateTime?
+    deliveryDate      DateTime?
+    
+    subtotal          Int
+    tax               Int      @default(0)
+    discount          Int      @default(0)
+    grandTotal        Int
+    
+    // Payment information
+    paymentStatus     PaymentStatus @default(PENDING)
+    paymentMethod     String?
+    externalTransactionId String?
+    paidAt            DateTime?
+    
+    // Order status
+    status            OrderStatus @default(DRAFT)
+    
+    // Shipping information
+    shippingAddress   String?
+    shippingMethod    String?
+    shippingCost      Int      @default(0)
+    
+    // Notes and audit
+    notes             String?
+    createdBy         String
+    creator           User     @relation("OrderCreator", fields: [createdBy], references: [id])
+    approvedBy        String?
+    approver          User?    @relation("OrderApprover", fields: [approvedBy], references: [id])
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    orderItems        OrderItem[]
 }
 
 enum OrderStatus {
-    AWAITING_PAYMENT
+    DRAFT
+    CONFIRMED
     PROCESSING
-    DONE
+    SHIPPED
+    DELIVERED
+    CANCELLED
+    RETURNED
+}
+
+enum PaymentStatus {
+    PENDING
+    PARTIAL
+    PAID
+    REFUNDED
+    VOID
 }
 
 model OrderItem {
-    id        String @id @default(uuid())
-    productId String
-    orderId   String
-
-    product Product @relation(fields: [productId], references: [id])
-    order   Order   @relation(fields: [orderId], references: [id])
-
-    price    Int
-    quantity Int
+    id                String   @id @default(uuid())
+    orderId           String
+    order             Order    @relation(fields: [orderId], references: [id])
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    
+    quantity          Int
+    unitPrice         Int
+    discount          Int      @default(0)
+    totalPrice        Int
+    
+    createdAt         DateTime @default(now())
 }
+
+// ========================================
+// OFFLINE SYNC SUPPORT
+// ========================================
+
+model SyncLog {
+    id                String   @id @default(uuid())
+    entityType        String   // User, Product, Order, etc.
+    entityId          String
+    action            String   // CREATE, UPDATE, DELETE
+    data              Json     // The actual data
+    deviceId          String?  // For offline sync
+    syncStatus        SyncStatus @default(PENDING)
+    syncAttempts      Int      @default(0)
+    lastSyncAttempt   DateTime?
+    errorMessage      String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum SyncStatus {
+    PENDING
+    SYNCED
+    FAILED
+    CONFLICT
+}
+
+// ========================================
+// LEGACY SUPPORT (keeping original models)
+// ========================================
 
 model Post {
-  id         String   @id @default(uuid())
-  name       String
-  createdAt  DateTime @default(now())
-
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  createdById String
-}
-
-model User {
-  id    String  @id @default(uuid())
-  name  String
-
-  posts Post[]
+    id                String   @id @default(uuid())
+    name              String
+    createdAt         DateTime @default(now())
+    
+    createdBy         String
+    creator           User     @relation(fields: [createdBy], references: [id])
 }
