@@ -13,7 +13,6 @@ import {
   DollarSign,
   Users,
   Package,
-  Calendar,
   Filter,
   Download,
   RefreshCw

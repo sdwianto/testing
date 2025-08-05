@@ -15,12 +15,8 @@ import {
   CheckCircle,
   Search,
   Filter,
-  Plus,
   FileText,
   Building2,
-  Mail,
-  Phone,
-  MapPin,
   GraduationCap,
   Briefcase
 } from 'lucide-react';

@@ -8,7 +8,6 @@ import {
   Download, 
   Upload, 
   RefreshCw, 
-  Trash2, 
   Archive,
   FileText,
   HardDrive,
@@ -17,15 +16,9 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  Settings,
-  Search,
-  Filter,
-  MoreHorizontal,
   Eye,
   Edit,
-  Copy,
-  Lock,
-  Unlock
+  Lock
 } from 'lucide-react';
 
 const DataManagementPage: React.FC = () => {

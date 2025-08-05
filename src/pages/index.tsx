@@ -6,7 +6,7 @@ export default function IndexPage() {
 
   useEffect(() => {
     // Redirect to dashboard
-    router.replace('/dashboard');
+    void router.replace('/dashboard');
   }, [router]);
 
   return (

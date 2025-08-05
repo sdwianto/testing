@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { 
   Cloud, 
   Wifi, 
-  WifiOff, 
   RefreshCw, 
   CheckCircle, 
   AlertTriangle,

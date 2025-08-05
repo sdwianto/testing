@@ -29,7 +29,7 @@ import {
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { ThemeToggle } from "../ThemeToggle";
-import { useEffect, useState } from "react";
+
 
 // Dashboard header component
 interface DashboardHeaderProps {

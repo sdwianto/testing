@@ -12,19 +12,13 @@ import {
   Filter,
   MoreHorizontal,
   Edit,
-  Trash2,
   Eye,
   Lock,
-  Unlock,
-  Mail,
-  Phone,
   Calendar,
   MapPin,
   Building,
-  Crown,
   User,
-  UserCheck,
-  UserX
+  UserCheck
 } from 'lucide-react';
 
 const UsersPage: React.FC = () => {
