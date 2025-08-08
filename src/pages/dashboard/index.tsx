@@ -1,9 +1,12 @@
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { DashboardRealTime } from '@/components/DashboardRealTime';
+import { MaintenanceCard } from '@/components/MaintenanceCard';
+import { MaintenanceAlerts } from '@/components/MaintenanceAlerts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import { 
   Package, 
   Truck, 
@@ -14,10 +17,12 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Plus
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
+  const router = useRouter();
   // Mock data for demonstration
   const stats = {
     inventory: {
@@ -43,15 +48,66 @@ const DashboardPage: React.FC = () => {
       onLeave: 3,
       newHires: 2,
       attendance: 98.5
+    },
+    maintenance: {
+      totalEquipment: 45,
+      scheduledMaintenance: 12,
+      overdueMaintenance: 3,
+      inProgress: 5,
+      completedThisMonth: 28,
+      totalCost: 125000
     }
   };
 
+  const maintenanceAlerts = [
+    {
+      id: 1,
+      equipmentName: 'Loader LD-005',
+      equipmentCode: 'LD-005',
+      alertType: 'EMERGENCY' as const,
+      message: 'Engine failure - immediate repair required',
+      priority: 'CRITICAL' as const,
+      scheduledDate: '2024-01-08'
+    },
+    {
+      id: 2,
+      equipmentName: 'Bulldozer BD-003',
+      equipmentCode: 'BD-003',
+      alertType: 'OVERDUE' as const,
+      message: 'Hydraulic system maintenance overdue',
+      priority: 'HIGH' as const,
+      daysOverdue: 5,
+      scheduledDate: '2024-01-10'
+    },
+    {
+      id: 3,
+      equipmentName: 'Crane CR-002',
+      equipmentCode: 'CR-002',
+      alertType: 'INSPECTION' as const,
+      message: 'Annual safety inspection due',
+      priority: 'HIGH' as const,
+      scheduledDate: '2024-01-20'
+    },
+    {
+      id: 4,
+      equipmentName: 'Excavator EX-001',
+      equipmentCode: 'EX-001',
+      alertType: 'SCHEDULED' as const,
+      message: 'Regular engine oil change scheduled',
+      priority: 'MEDIUM' as const,
+      scheduledDate: '2024-01-15'
+    }
+  ];
+
   const recentActivities = [
-    { id: 1, type: 'inventory', message: 'Low stock alert: Excavator spare parts', time: '2 min ago', status: 'warning' },
-    { id: 2, type: 'rental', message: 'Equipment rental completed: Bulldozer #BD-001', time: '15 min ago', status: 'success' },
-    { id: 3, type: 'maintenance', message: 'Scheduled maintenance: Crane #CR-003', time: '1 hour ago', status: 'info' },
-    { id: 4, type: 'finance', message: 'Payment received: Invoice #INV-2024-001', time: '2 hours ago', status: 'success' },
-    { id: 5, type: 'hr', message: 'New employee onboarded: John Smith', time: '3 hours ago', status: 'info' }
+    { id: 1, type: 'maintenance', message: 'Emergency maintenance started: Loader LD-005 engine failure', time: '5 min ago', status: 'warning' },
+    { id: 2, type: 'maintenance', message: 'Preventive maintenance completed: Excavator EX-001', time: '30 min ago', status: 'success' },
+    { id: 3, type: 'maintenance', message: 'Overdue maintenance alert: Bulldozer BD-003', time: '1 hour ago', status: 'warning' },
+    { id: 4, type: 'inventory', message: 'Low stock alert: Excavator spare parts', time: '2 hours ago', status: 'warning' },
+    { id: 5, type: 'rental', message: 'Equipment rental completed: Bulldozer #BD-001', time: '3 hours ago', status: 'success' },
+    { id: 6, type: 'maintenance', message: 'Scheduled maintenance: Crane #CR-003', time: '4 hours ago', status: 'info' },
+    { id: 7, type: 'finance', message: 'Payment received: Invoice #INV-2024-001', time: '5 hours ago', status: 'success' },
+    { id: 8, type: 'hr', message: 'New employee onboarded: John Smith', time: '6 hours ago', status: 'info' }
   ];
 
   const getStatusIcon = (status: string) => {
@@ -168,41 +224,95 @@ const DashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/inventory')}
+              >
                 <Package className="h-6 w-6" />
                 <span className="text-sm">Inventory</span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/rental')}
+              >
                 <Truck className="h-6 w-6" />
                 <span className="text-sm">Rental</span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2 relative"
+                onClick={() => router.push('/maintenance')}
+              >
                 <Wrench className="h-6 w-6" />
                 <span className="text-sm">Maintenance</span>
+                {stats.maintenance.overdueMaintenance > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white">
+                    {stats.maintenance.overdueMaintenance}
+                  </Badge>
+                )}
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/finance')}
+              >
                 <DollarSign className="h-6 w-6" />
                 <span className="text-sm">Finance</span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/hrms')}
+              >
                 <Users className="h-6 w-6" />
                 <span className="text-sm">HR</span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/crm')}
+              >
                 <Building2 className="h-6 w-6" />
                 <span className="text-sm">CRM</span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/reports')}
+              >
                 <TrendingUp className="h-6 w-6" />
                 <span className="text-sm">Reports</span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col items-center justify-center gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/alerts')}
+              >
                 <AlertTriangle className="h-6 w-6" />
                 <span className="text-sm">Alerts</span>
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Maintenance Overview Card */}
+        <MaintenanceCard
+          stats={stats.maintenance}
+          onViewMaintenance={() => router.push('/maintenance')}
+          onScheduleMaintenance={() => router.push('/maintenance')}
+          onViewOverdue={() => router.push('/maintenance?tab=overdue')}
+          onViewCompleted={() => router.push('/maintenance?tab=completed')}
+          onViewCostAnalysis={() => router.push('/maintenance?tab=reports')}
+        />
+
+        {/* Maintenance Alerts */}
+        <MaintenanceAlerts
+          alerts={maintenanceAlerts}
+          onViewAll={() => router.push('/maintenance')}
+          onViewAlert={(alertId) => router.push(`/maintenance?alert=${alertId}`)}
+        />
 
         {/* Recent Activities */}
         <Card>

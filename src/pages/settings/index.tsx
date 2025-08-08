@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { ThemeColorPicker } from '@/components/ThemeColorPicker';
 import { 
   Settings, 
   Users,
@@ -317,6 +318,9 @@ const SettingsPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Theme Customization */}
+        <ThemeColorPicker />
 
         {/* System Configuration */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

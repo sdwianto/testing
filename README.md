@@ -1,6 +1,44 @@
-# NextGen ERP System
+# NextGen ERP System - CA Mine Implementation
 
-A comprehensive Enterprise Resource Planning (ERP) system built for NextGen Technology Limited, Papua New Guinea. This modern, full-stack ERP solution provides complete business management capabilities with offline support, real-time analytics, and modular architecture.
+A comprehensive Enterprise Resource Planning (ERP) system built for **CA Mine (Mining Company)** and **NextGen Technology Limited, Papua New Guinea**. This modern, full-stack ERP solution provides complete business management capabilities with offline support, real-time analytics, and modular architecture specifically designed for mining operations.
+
+## 📋 Project Overview
+
+### **CA Mine RFP Requirements**
+- **Client**: CA Mine (Mining Company)
+- **Objective**: Streamline, automate, and integrate core business processes
+- **Scope**: Finance, purchasing, inventory, sales, HR, and operational activities
+- **Key Requirements**:
+  - Web-based system with secure multi-location access
+  - Role-based access control (admin, staff, management)
+  - Customizable dashboards and reporting tools
+  - Data migration from current systems
+  - Integration capabilities with other software
+  - Staff training and post-deployment support
+
+### **NextGen Technology Proposal**
+- **Client**: NextGen Technology Limited, Papua New Guinea
+- **Objective**: Modern, modular, scalable, and fully open-source custom ERP platform
+- **Key Features**:
+  - End-to-end integration of all core operational systems
+  - Process automation and real-time reporting
+  - Hybrid deployment with offline operations support
+  - Complete open-source deliverables with IP transfer
+
+## 🎯 Business Objectives
+
+### **Primary Goals**
+1. **Improve operational efficiency** and data accuracy
+2. **Enable real-time information access** and reporting
+3. **Reduce manual processes** and paperwork
+4. **Support remote/offline operations** with automatic synchronization
+5. **Provide enterprise-grade security** and audit trails
+
+### **Industry-Specific Requirements**
+- **Mining Operations**: Equipment tracking, maintenance scheduling, safety compliance
+- **Remote Locations**: Offline capability for field operations
+- **Multi-site Management**: Distributed inventory and operations
+- **Regulatory Compliance**: Audit trails, safety reporting, environmental monitoring
 
 ## 🚀 Features
 
@@ -12,6 +50,7 @@ A comprehensive Enterprise Resource Planning (ERP) system built for NextGen Tech
 - **HRMS & Payroll**: Employee management, attendance tracking, payroll processing
 - **CRM**: Customer relationship management, contact tracking, sales pipeline
 - **Sales & Orders**: Order processing, customer management, payment integration
+- **Production & Operations**: Mining-specific operational workflows and tracking
 
 ### Advanced Features
 - **Offline Capability**: PouchDB integration for offline data entry and sync
@@ -21,6 +60,7 @@ A comprehensive Enterprise Resource Planning (ERP) system built for NextGen Tech
 - **Equipment Maintenance**: Preventive and corrective maintenance tracking
 - **Business Intelligence**: Advanced reporting and analytics
 - **Audit Trail**: Complete system activity logging
+- **Safety Compliance**: Mining safety protocols and incident tracking
 
 ### Technical Features
 - **Authentication**: Clerk authentication with role-based access
@@ -32,99 +72,166 @@ A comprehensive Enterprise Resource Planning (ERP) system built for NextGen Tech
 - **State Management**: Zustand for application state
 - **Offline Sync**: PouchDB + CouchDB for offline capabilities
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
-- **Frontend**: Next.js 15, React 19, TypeScript
+### **Frontend**
+- **Framework**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS 4, Radix UI components
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Clerk
-- **Payment**: Xendit
 - **State Management**: Zustand
-- **API**: tRPC
 - **Forms**: React Hook Form with Zod validation
-- **UI Components**: Custom components with Radix UI primitives
-- **Offline Sync**: PouchDB, CouchDB
-- **Real-time**: Socket.io
 - **Charts**: Recharts
 - **Tables**: TanStack Table
+
+### **Backend**
+- **Runtime**: Node.js (NestJS, TypeScript)
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Clerk
+- **API**: tRPC
+- **Real-time**: Socket.io/WebSocket
+- **Offline Sync**: PouchDB, CouchDB
+
+### **DevOps & Deployment**
+- **Containerization**: Docker + Kubernetes
+- **Payment**: Xendit
 - **File Handling**: React Dropzone, PDF generation
+- **Business Intelligence**: Metabase, Grafana (planned)
 
-## 📋 Prerequisites
+## 📊 Development Phases & Timeline
 
-Before running this project, make sure you have:
+### **Phase 1: Initiation & Study** (2 weeks)
+- ✅ Project kickoff and requirements gathering
+- ✅ Workflow definition and business process mapping
+- **Deliverables**: Project plan, requirements document, workflow map
 
-- Node.js 18+ installed
-- PostgreSQL database
-- Clerk account for authentication
-- Xendit account for payments
-- Supabase account (optional, for hosting)
+### **Phase 2: Design & Prototyping** (2 weeks)
+- ✅ System architecture design
+- ✅ User interface wireframes and user journeys
+- **Deliverables**: Wireframes, architecture documentation, user flows
 
-## 🚀 Getting Started
+### **Phase 3: Development Sprint 1** (5 weeks)
+- ✅ Core system: user management, security, inventory, rental
+- **Deliverables**: Core modules demo, user review, code review
 
-### 1. Clone the Repository
+### **Phase 4: Development Sprint 2** (6 weeks)
+- 🔄 Finance, HRMS, payroll, CRM, BI/reporting
+- **Deliverables**: Full business modules, integration tests
 
+### **Phase 5: Integration & Testing** (3 weeks)
+- 🔄 UAT, integration, bug fixes, performance testing
+- **Deliverables**: UAT sign-off, test reports, release notes
+
+### **Phase 6: Go-Live Preparation** (1 week)
+- 🔄 Deployment, migration, user training, documentation
+- **Deliverables**: Live system, training materials, user manual
+
+### **Phase 7: Post-Go-Live Support** (1-3 months)
+- 🔄 Bug fixing, technical support, minor enhancements
+- **Deliverables**: Support logs, patch reports
+
+**Total Timeline**: 4-6 months (phases may overlap)
+
+## 🏗️ System Architecture
+
+### **Main Components**
+1. **User Layer (Frontend Web/PWA)**
+   - React.js/Next.js accessible via browser on any device
+   - Offline capabilities through Service Worker and PouchDB
+   - Responsive design for all roles: admin, operator, manager
+
+2. **API Layer (Backend)**
+   - Node.js/NestJS for business logic, RBAC, JWT authentication
+   - WebSocket server for real-time dashboards and notifications
+   - Audit logging and security compliance
+
+3. **Data Layer**
+   - PostgreSQL for transactional and reporting data
+   - CouchDB for synchronizing data from offline devices
+   - Redis (optional): Fast cache and queueing for notifications
+
+4. **Offline Sync Layer**
+   - PouchDB stores data locally on devices
+   - Automatic synchronization with CouchDB when online
+   - Native conflict detection and resolution
+
+5. **Business Intelligence (BI)**
+   - Embedded Metabase/Grafana dashboards
+   - Role-based access control for reports
+   - Scheduled report distribution
+
+### **Data Flow Scenarios**
+
+#### **Online Operations**
+- Users log in (authenticated via Clerk)
+- Access features/modules based on permissions
+- All actions routed through API and recorded in PostgreSQL
+- Dashboards and notifications update in real time via WebSocket
+
+#### **Offline Operations**
+- Operators input data in the field (equipment usage, spare parts, etc.)
+- Data stored locally in PouchDB
+- Automatic sync with CouchDB when online
+- Data conflicts resolved automatically or flagged for admin review
+
+#### **Reporting & Analytics**
+- PostgreSQL data visualized via Metabase/Grafana dashboards
+- Reports protected by role and distributed automatically
+- Real-time KPI monitoring and business intelligence
+
+## 🔐 Security & Compliance
+
+### **Authentication & Authorization**
+- **Clerk Authentication**: Enterprise-grade security with SSO, RBAC, MFA
+- **Role-based Access Control**: Granular permissions per module
+- **Audit Trail**: Complete system activity logging
+- **Session Management**: Secure session handling and timeout
+
+### **Data Security**
+- **Encryption**: Data encryption at rest and in transit
+- **Backup & Recovery**: Automated backup systems
+- **Compliance**: Mining industry safety and regulatory compliance
+- **Access Logging**: Complete audit trail for all system activities
+
+## 🎨 UI/UX Features
+
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Dark/Light Mode**: Theme toggle functionality
+- **Modern UI**: Clean, intuitive interface using Radix UI
+- **Loading States**: Skeleton loaders and loading indicators
+- **Toast Notifications**: User feedback for actions
+- **Form Validation**: Real-time validation with error messages
+- **Data Tables**: Sortable, filterable data tables
+- **Charts & Graphs**: Business intelligence visualizations
+
+## 🔄 Offline Capability
+
+The ERP system supports offline operation critical for mining operations:
+- **PouchDB**: Local data storage on client devices
+- **CouchDB**: Server-side sync database
+- **Conflict Resolution**: Automatic conflict handling
+- **Auto-sync**: Automatic synchronization when online
+- **Data Integrity**: Ensures data consistency across all devices
+
+## 🚀 Deployment Options
+
+### **Vercel (Recommended)**
+1. Push code to GitHub
+2. Connect repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy
+
+### **Docker Deployment**
 ```bash
-git clone <repository-url>
-cd nextgen-erp
+# Build the Docker image
+docker build -t nextgen-erp .
+
+# Run the container
+docker run -p 3000:3000 nextgen-erp
 ```
 
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Environment Setup
-
-Create a `.env.local` file in the root directory with the following variables:
-
-```env
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/nextgen_erp"
-DIRECT_URL="postgresql://username:password@localhost:5432/nextgen_erp"
-
-# Authentication (Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-
-# Payment Gateway (Xendit)
-XENDIT_SECRET_KEY=your_xendit_secret_key
-XENDIT_CALLBACK_TOKEN=your_xendit_callback_token
-
-# Supabase (optional)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-# Offline Sync (CouchDB)
-COUCHDB_URL=your_couchdb_url
-COUCHDB_USERNAME=your_couchdb_username
-COUCHDB_PASSWORD=your_couchdb_password
-```
-
-### 4. Database Setup
-
-```bash
-# Generate Prisma client
-npm run db:generate
-
-# Push schema to database
-npm run db:push
-
-# Seed the database with initial data
-npm run db:seed
-
-# (Optional) Open Prisma Studio
-npm run db:studio
-```
-
-### 5. Run the Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+### **Kubernetes (Production)**
+- Scalable deployment across multiple nodes
+- Load balancing and auto-scaling
+- Health monitoring and automatic failover
 
 ## 📁 Project Structure
 
@@ -159,63 +266,63 @@ nextgen-erp/
 
 ## 🎯 Key Pages & Modules
 
-### Dashboard (`/dashboard`)
+### **Dashboard (`/dashboard`)**
 - Real-time KPI monitoring
 - Business intelligence widgets
 - Recent activities feed
 - Quick action buttons
 - Upcoming events calendar
 
-### Inventory (`/inventory`)
+### **Inventory (`/inventory`)**
 - Multi-warehouse inventory management
 - Stock level monitoring
 - Purchase order management
 - Supplier management
 - Inventory transactions
 
-### Equipment (`/equipment`)
+### **Equipment (`/equipment`)**
 - Equipment tracking and management
 - Rental order processing
 - Equipment status monitoring
 - Location tracking
 - Utilization analytics
 
-### Maintenance (`/maintenance`)
+### **Maintenance (`/maintenance`)**
 - Preventive maintenance scheduling
 - Corrective maintenance tracking
 - Maintenance history
 - Parts management
 - Cost tracking
 
-### Finance (`/finance`)
+### **Finance (`/finance`)**
 - General ledger management
 - Accounts payable/receivable
 - Financial transactions
 - Chart of accounts
 - Financial reporting
 
-### HRMS (`/hrms`)
+### **HRMS (`/hrms`)**
 - Employee management
 - Attendance tracking
 - Leave management
 - Payroll processing
 - Performance tracking
 
-### CRM (`/crm`)
+### **CRM (`/crm`)**
 - Customer management
 - Contact tracking
 - Sales pipeline
 - Customer interactions
 - Lead management
 
-### Sales (`/sales`)
+### **Sales (`/sales`)**
 - Order processing
 - Customer management
 - Payment integration
 - Order tracking
 - Sales analytics
 
-### Reports (`/reports`)
+### **Reports (`/reports`)**
 - Business intelligence dashboards
 - Custom report generation
 - Data analytics
@@ -240,13 +347,13 @@ nextgen-erp/
 
 The ERP system uses a comprehensive database schema with the following main modules:
 
-### Core System
+### **Core System**
 - **User**: Authentication and user management
 - **Role**: Role-based access control
 - **Department**: Organizational structure
 - **AuditLog**: System activity logging
 
-### Inventory & Procurement
+### **Inventory & Procurement**
 - **Category**: Product categorization
 - **Product**: Product master data
 - **Warehouse**: Multi-warehouse support
@@ -255,40 +362,31 @@ The ERP system uses a comprehensive database schema with the following main modu
 - **PurchaseOrder**: Procurement management
 - **Supplier**: Supplier master data
 
-### Equipment & Maintenance
+### **Equipment & Maintenance**
 - **Equipment**: Equipment master data
 - **MaintenanceRecord**: Maintenance history
 - **RentalOrder**: Equipment rental management
 
-### Finance & Accounting
+### **Finance & Accounting**
 - **FinancialTransaction**: Financial transactions
 - **Account**: Chart of accounts
 
-### HRMS & Payroll
+### **HRMS & Payroll**
 - **Employee**: Employee master data
 - **AttendanceRecord**: Attendance tracking
 - **LeaveRequest**: Leave management
 - **PayrollRecord**: Payroll processing
 
-### CRM
+### **CRM**
 - **Customer**: Customer master data
 - **CustomerContact**: Customer interactions
 
-### Sales & Orders
+### **Sales & Orders**
 - **Order**: Sales order management
 - **OrderItem**: Order line items
 
-### Offline Sync
+### **Offline Sync**
 - **SyncLog**: Offline synchronization tracking
-
-## 🔐 Authentication & Security
-
-The application uses Clerk for authentication with:
-- Role-based access control (RBAC)
-- Granular permissions per module
-- Audit trail for all activities
-- Multi-factor authentication support
-- Session management
 
 ## 💳 Payment Integration
 
@@ -299,65 +397,19 @@ The system integrates with Xendit for payment processing:
 - Payment status tracking
 - Receipt generation
 
-## 🎨 UI/UX Features
+## 🤝 Support & Training
 
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Dark/Light Mode**: Theme toggle functionality
-- **Modern UI**: Clean, intuitive interface using Radix UI
-- **Loading States**: Skeleton loaders and loading indicators
-- **Toast Notifications**: User feedback for actions
-- **Form Validation**: Real-time validation with error messages
-- **Data Tables**: Sortable, filterable data tables
-- **Charts & Graphs**: Business intelligence visualizations
+### **Training Program**
+- Admin and key user training (onsite or remote)
+- Comprehensive user manuals and reference guides
+- Role-specific training sessions
+- Hands-on workshops and simulations
 
-## 🔄 Offline Capability
-
-The ERP system supports offline operation:
-- **PouchDB**: Local data storage on client devices
-- **CouchDB**: Server-side sync database
-- **Conflict Resolution**: Automatic conflict handling
-- **Auto-sync**: Automatic synchronization when online
-- **Data Integrity**: Ensures data consistency
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy
-
-### Docker Deployment
-
-```bash
-# Build the Docker image
-docker build -t nextgen-erp .
-
-# Run the container
-docker run -p 3000:3000 nextgen-erp
-```
-
-### Other Platforms
-
-The application can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
-- Google Cloud Run
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### **Post-Launch Support**
+- Bug fixing and patches at no extra charge for 1-3 months
+- Technical consultation and troubleshooting
+- Minor enhancements and optimizations
+- Performance monitoring and optimization
 
 ## 🆘 Support
 
@@ -380,4 +432,19 @@ If you encounter any issues or have questions:
 
 ---
 
-Built with ❤️ for NextGen Technology Limited, Papua New Guinea using Next.js, TypeScript, and modern web technologies. 
+Built with ❤️ for **CA Mine** and **NextGen Technology Limited, Papua New Guinea** using Next.js, TypeScript, and modern web technologies.
+
+## 📋 Next Steps & Development Priorities
+
+### **Immediate Priorities**
+1. Complete Phase 4 development (Finance, HRMS, CRM modules)
+2. Implement mining-specific features and workflows
+3. Enhance offline capabilities for remote mining operations
+4. Add safety compliance tracking and reporting
+
+### **Future Enhancements**
+1. Integration with mining equipment IoT sensors
+2. Environmental monitoring and compliance reporting
+3. Advanced analytics for operational optimization
+4. Mobile app development for field operations
+5. Integration with external mining software systems 
