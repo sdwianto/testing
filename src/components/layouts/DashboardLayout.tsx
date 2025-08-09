@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarSeparator,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -300,7 +301,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="relative flex-1 overflow-auto p-6">{children}</main>
+        <main className="relative flex-1 overflow-auto p-6">
+          <div className="md:hidden mb-4">
+            <SidebarTrigger />
+          </div>
+          {children}
+        </main>
       </div>
     </SidebarProvider>
   );

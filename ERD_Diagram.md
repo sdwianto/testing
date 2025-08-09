@@ -34,6 +34,78 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
                     └─────────────┘    └─────────────┘
 ```
 
+### System Configuration & Settings
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│SystemConfig │    │UserSettings │    │ThemeConfig  │    │Notification │
+│             │    │             │    │             │    │  Settings   │
+├─────────────┤    ├─────────────┤    ├─────────────┤    ├─────────────┤
+│ id (PK)     │    │ id (PK)     │    │ id (PK)     │    │ id (PK)     │
+│ configKey   │    │ userId (FK) │    │ userId (FK) │    │ userId (FK) │
+│ configValue │    │ theme       │    │ primaryColor│    │ emailEnabled│
+│ description │    │ language    │    │ backgroundColor│ │ smsEnabled  │
+│ category    │    │ timezone    │    │ foregroundColor│ │ pushEnabled │
+│ isActive    │    │ dateFormat  │    │ accentColor │    │ frequency   │
+│ createdAt   │    │ currency    │    │ borderColor │    │ reportGen   │
+│ updatedAt   │    │ createdAt   │    │ customColors│    │ systemAlerts│
+│ createdBy   │    │ updatedAt   │    │ createdAt   │    │ perfUpdates │
+│ updatedBy   │    └─────────────┘    │ updatedAt   │    │ createdAt   │
+└─────────────┘            │          └─────────────┘    │ updatedAt   │
+       │                   │                   │         └─────────────┘
+       └───────────────────┼───────────────────┼─────────────────┘
+                           │                   │
+                    ┌──────┴──────┐    ┌──────┴──────┐
+                    │   1:1       │    │   1:1       │
+                    └─────────────┘    └─────────────┘
+```
+
+### Analytics & Reports Module
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Report    │    │ReportSchedule│   │ReportRecipient│  │ReportTemplate│
+├─────────────┤    ├─────────────┤    ├─────────────┤    ├─────────────┤
+│ id (PK)     │    │ id (PK)     │    │ id (PK)     │    │ id (PK)     │
+│ name        │    │ reportId(FK)│    │ reportId(FK)│    │ name        │
+│ type        │    │ frequency   │    │ email       │    │ description │
+│ description │    │ nextRun     │    │ name        │    │ query       │
+│ format      │    │ isActive    │    │ isActive    │    │ parameters  │
+│ recipients  │    │ lastRun     │    │ createdAt   │    │ format      │
+│ lastGenerated│   │ createdAt   │    │ updatedAt   │    │ isActive    │
+│ nextScheduled│   │ updatedAt   │    └─────────────┘    │ createdAt   │
+│ status      │    └─────────────┘            │          │ updatedAt   │
+│ createdBy   │            │                  │          └─────────────┘
+│ createdAt   │            │                  │                   │
+│ updatedAt   │            │                  │                   │
+└─────────────┘            │                  │                   │
+       │                   │                  │                   │
+       └───────────────────┼──────────────────┼───────────────────┘
+                           │                  │
+                    ┌──────┴──────┐   ┌──────┴──────┐
+                    │   1:N       │   │   1:N       │
+                    └─────────────┘   └─────────────┘
+
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│AlertRule    │    │KpiMetric    │    │AnalyticsData│    │Dashboard    │
+├─────────────┤    ├─────────────┤    ├─────────────┤    ├─────────────┤
+│ id (PK)     │    │ id (PK)     │    │ id (PK)     │    │ id (PK)     │
+│ name        │    │ name        │    │ metricName  │    │ name        │
+│ condition   │    │ category    │    │ value       │    │ description │
+│ threshold   │    │ value       │    │ period      │    │ layout      │
+│ action      │    │ change      │    │ trend       │    │ isDefault   │
+│ status      │    │ trend       │    │ createdAt   │    │ userId (FK) │
+│ createdAt   │    │ period      │    │ updatedAt   │    │ createdAt   │
+│ updatedAt   │    │ isActive    │    └─────────────┘    │ updatedAt   │
+└─────────────┘    │ createdAt   │            │          └─────────────┘
+                   │ updatedAt   │            │                   │
+                   └─────────────┘            │                   │
+                           │                  │                   │
+                           └──────────────────┼───────────────────┘
+                                              │
+                                       ┌──────┴──────┐
+                                       │   1:N       │
+                                       └─────────────┘
+```
+
 ### Inventory & Procurement Module
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -326,6 +398,18 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 23. **Employee → PayrollRecord**: One employee can have many payroll records
 24. **User → AuditLog**: One user can have many audit logs
 25. **User → FinancialTransaction**: One user can have many financial transactions
+26. **User → UserSettings**: One user can have one settings record
+27. **User → ThemeConfig**: One user can have one theme configuration
+28. **User → NotificationSettings**: One user can have one notification settings
+29. **Report → ReportSchedule**: One report can have many schedules
+30. **Report → ReportRecipient**: One report can have many recipients
+31. **User → Dashboard**: One user can have many dashboards
+32. **Dashboard → AnalyticsData**: One dashboard can have many analytics data points
+
+### One-to-One (1:1) Relationships
+1. **User → UserSettings**: One user has one settings record
+2. **User → ThemeConfig**: One user has one theme configuration
+3. **User → NotificationSettings**: One user has one notification settings
 
 ### Many-to-One (N:1) Relationships
 - All foreign key relationships are many-to-one
@@ -339,6 +423,7 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 - **OrderItem**: Links Order and Product (many-to-many relationship)
 - **PurchaseOrderItem**: Links PurchaseOrder and Product (many-to-many relationship)
 - **RentalOrderItem**: Links RentalOrder and Equipment (many-to-many relationship)
+- **ReportRecipient**: Links Report and email recipients (many-to-many relationship)
 
 ## Database Enums
 
@@ -356,6 +441,9 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 - **CustomerStatus**: ACTIVE, INACTIVE, PROSPECT, LEAD
 - **ContactStatus**: OPEN, IN_PROGRESS, COMPLETED, CANCELLED
 - **SyncStatus**: PENDING, SYNCED, FAILED, CONFLICT
+- **ReportStatus**: ACTIVE, SCHEDULED, INACTIVE, DRAFT
+- **AlertStatus**: ACTIVE, INACTIVE, TRIGGERED, RESOLVED
+- **DashboardStatus**: ACTIVE, INACTIVE, ARCHIVED
 
 ### Type Enums
 - **InventoryTransactionType**: IN, OUT, ADJUSTMENT, TRANSFER
@@ -368,6 +456,12 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 - **LeaveType**: ANNUAL_LEAVE, SICK_LEAVE, PERSONAL_LEAVE, MATERNITY_LEAVE, PATERNITY_LEAVE, UNPAID_LEAVE
 - **CustomerType**: INDIVIDUAL, COMPANY, GOVERNMENT
 - **ContactType**: PHONE_CALL, EMAIL, MEETING, VISIT, OTHER
+- **ReportType**: FINANCE, INVENTORY, RENTAL, CRM, HRMS, ANALYTICS, CUSTOM
+- **ReportFormat**: PDF, EXCEL, POWERBI, CSV, JSON
+- **ReportFrequency**: IMMEDIATE, DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+- **AlertCondition**: STOCK_LEVEL, REVENUE, EQUIPMENT_USAGE, CUSTOMER_ACTIVITY, SYSTEM_PERFORMANCE
+- **ThemeType**: LIGHT, DARK, SYSTEM, CUSTOM
+- **NotificationChannel**: EMAIL, SMS, PUSH, IN_APP
 
 ## Key Features of the ERD
 
@@ -414,12 +508,25 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 - Lead and prospect management
 - Credit limit and balance tracking
 
-### 9. **Offline Sync Support**
+### 9. **Analytics & Reporting**
+- Comprehensive reporting system with scheduling
+- KPI metrics tracking and trending
+- Real-time analytics data collection
+- Custom dashboard creation and management
+- Alert rules and notification system
+
+### 10. **System Configuration**
+- User-specific settings and preferences
+- Theme customization with color schemes
+- Notification preferences and channels
+- System-wide configuration management
+
+### 11. **Offline Sync Support**
 - PouchDB/CouchDB integration for offline operations
 - Conflict resolution and sync status tracking
 - Device-specific sync logging
 
-### 10. **Mining-Specific Features**
+### 12. **Mining-Specific Features**
 - Equipment tracking for heavy machinery
 - Maintenance scheduling for mining equipment
 - Safety compliance tracking
@@ -439,6 +546,7 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 - Inventory transactions maintain stock level integrity
 - Financial transactions maintain account balance accuracy
 - Order status transitions follow business rules
+- Report scheduling maintains data consistency
 
 ## Scalability Considerations
 
@@ -451,10 +559,12 @@ This document provides a comprehensive Entity Relationship Diagram for the NextG
 - Proper indexing on frequently queried fields
 - JSON fields for flexible data storage
 - Efficient relationship queries with proper joins
+- Analytics data aggregation and caching
 
 ### Data Integrity
 - Referential integrity through foreign key constraints
 - Business rule enforcement through application logic
 - Audit trail for data change tracking
+- Configuration validation and versioning
 
-This ERD provides a comprehensive foundation for the NextGen ERP system, supporting all the business requirements for CA Mine while maintaining flexibility for future enhancements and scalability for growth.
+This updated ERD provides a comprehensive foundation for the NextGen ERP system, supporting all the business requirements for CA Mine while maintaining flexibility for future enhancements and scalability for growth. The new modules (Analytics, Reports, Settings) enhance the system's capabilities for data-driven decision making and user customization.
