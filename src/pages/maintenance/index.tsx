@@ -322,14 +322,14 @@ const MaintenancePage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Maintenance Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Equipment maintenance scheduling and tracking</p>
           </div>
           <Dialog open={isAddMaintenanceOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
+              <Button className="w-full sm:w-auto flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Add Maintenance
               </Button>
@@ -513,15 +513,15 @@ const MaintenancePage: React.FC = () => {
                       {maintenanceRecords.map((record) => (
                         <div 
                           key={record.id} 
-                          className="flex items-center justify-between p-4 rounded-lg border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                           onClick={() => handleRecordClick(record)}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-start gap-4">
                             {getTypeIcon(record.maintenanceType)}
                             <div>
                               <h4 className="font-medium">{record.equipmentName}</h4>
                               <p className="text-sm text-muted-foreground">{record.description}</p>
-                              <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
                                 <Calendar className="h-3 w-3" />
                                 <span className="text-xs">{record.scheduledDate}</span>
                                 <User className="h-3 w-3 ml-2" />
@@ -529,7 +529,7 @@ const MaintenancePage: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex sm:flex-col items-start sm:items-end gap-2">
                             <Badge className={getStatusColor(record.status)}>
                               {record.status}
                             </Badge>
@@ -602,13 +602,13 @@ const MaintenancePage: React.FC = () => {
               <CardContent>
                 <div className="space-y-4">
                   {maintenanceRecords.filter(r => r.status === 'SCHEDULED').map((record) => (
-                    <div key={record.id} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div className="flex items-center gap-4">
+                    <div key={record.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border">
+                      <div className="flex items-start gap-4">
                         {getTypeIcon(record.maintenanceType)}
                         <div>
                           <h4 className="font-medium">{record.equipmentName}</h4>
                           <p className="text-sm text-muted-foreground">{record.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <Calendar className="h-3 w-3" />
                             <span className="text-xs">{record.scheduledDate}</span>
                             <User className="h-3 w-3 ml-2" />
@@ -616,11 +616,9 @@ const MaintenancePage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(record.priority)}>
-                          {record.priority}
-                        </Badge>
-                        <Button size="sm" onClick={() => handleStartWork(record.id)}>
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                        <Badge className={getPriorityColor(record.priority)}>{record.priority}</Badge>
+                        <Button size="sm" className="w-full sm:w-auto" onClick={() => handleStartWork(record.id)}>
                           Start Work
                         </Button>
                       </div>
@@ -639,13 +637,13 @@ const MaintenancePage: React.FC = () => {
               <CardContent>
                 <div className="space-y-4">
                   {maintenanceRecords.filter(r => r.status === 'IN_PROGRESS').map((record) => (
-                    <div key={record.id} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div className="flex items-center gap-4">
+                    <div key={record.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border">
+                      <div className="flex items-start gap-4">
                         {getTypeIcon(record.maintenanceType)}
                         <div>
                           <h4 className="font-medium">{record.equipmentName}</h4>
                           <p className="text-sm text-muted-foreground">{record.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <User className="h-3 w-3" />
                             <span className="text-xs">{record.assignedTechnician}</span>
                             <MapPin className="h-3 w-3 ml-2" />
@@ -653,22 +651,12 @@ const MaintenancePage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(record.priority)}>
-                          {record.priority}
-                        </Badge>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleUpdateProgress(record)}
-                        >
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                        <Badge className={getPriorityColor(record.priority)}>{record.priority}</Badge>
+                        <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => handleUpdateProgress(record)}>
                           Update Progress
                         </Button>
-                        <Button 
-                          size="sm" 
-                          disabled={!record.progressDetails}
-                          onClick={() => handleComplete(record.id)}
-                        >
+                        <Button size="sm" className="w-full sm:w-auto" disabled={!record.progressDetails} onClick={() => handleComplete(record.id)}>
                           Complete
                         </Button>
                       </div>
@@ -687,13 +675,13 @@ const MaintenancePage: React.FC = () => {
               <CardContent>
                 <div className="space-y-4">
                   {maintenanceRecords.filter(r => r.status === 'COMPLETED').map((record) => (
-                    <div key={record.id} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div className="flex items-center gap-4">
+                    <div key={record.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border">
+                      <div className="flex items-start gap-4">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                         <div>
                           <h4 className="font-medium">{record.equipmentName}</h4>
                           <p className="text-sm text-muted-foreground">{record.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <User className="h-3 w-3" />
                             <span className="text-xs">{record.assignedTechnician}</span>
                             <Calendar className="h-3 w-3 ml-2" />
@@ -701,10 +689,8 @@ const MaintenancePage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          COMPLETED
-                        </Badge>
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">COMPLETED</Badge>
                         <p className="text-sm font-medium">${record.actualCost?.toLocaleString() ?? record.estimatedCost.toLocaleString()}</p>
                       </div>
                     </div>

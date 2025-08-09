@@ -678,15 +678,15 @@ const CRMPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Customer Relationship Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage customers, leads, opportunities, and sales pipeline</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Dialog open={isEmailCampaignDialogOpen} onOpenChange={setIsEmailCampaignDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
                   Send Campaign
                 </Button>
@@ -736,7 +736,7 @@ const CRMPage: React.FC = () => {
 
             <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="w-full sm:w-auto flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
                   Add Customer
                 </Button>
@@ -932,7 +932,7 @@ const CRMPage: React.FC = () => {
         {/* Customer Management */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle>Customer Management</CardTitle>
               {hasActiveFilters && (
                 <Button 
@@ -948,7 +948,7 @@ const CRMPage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1142,7 +1142,7 @@ const CRMPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {leads.map((lead) => (
-                  <div key={lead.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={lead.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <UserPlus className="h-4 w-4 text-blue-500" />
                       <div>
@@ -1155,13 +1155,13 @@ const CRMPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-left sm:text-right">
                         <div className="text-sm font-medium">Assigned to</div>
                         <div className="text-sm text-gray-500">{lead.assignedTo}</div>
                       </div>
                       {getStatusBadge(lead.status)}
-                      <Button size="sm" variant="outline" onClick={() => handleViewLeadClick(lead)}>View</Button>
+                      <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => handleViewLeadClick(lead)}>View</Button>
                     </div>
                   </div>
                 ))}
@@ -1177,7 +1177,7 @@ const CRMPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {opportunities.map((opportunity) => (
-                  <div key={opportunity.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={opportunity.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <Target className="h-4 w-4 text-green-500" />
                       <div>

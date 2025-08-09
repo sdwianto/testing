@@ -250,3 +250,16 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Global mobile typography scaling */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px; /* down from 16px to make all rem-based text smaller */
+  }
+}
+
+@media (max-width: 380px) {
+  html {
+    font-size: 13px; /* extra reduction for very small screens */
+  }
+}

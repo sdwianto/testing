@@ -85,21 +85,21 @@ const BusinessIntelligencePage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Business Intelligence</h1>
             <p className="text-gray-600 dark:text-gray-400">Advanced analytics and insights for strategic decision making</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>

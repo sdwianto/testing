@@ -554,19 +554,19 @@ const ReportsPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
             <p className="text-gray-600 dark:text-gray-400">Generate reports, view analytics, and track business performance</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2" onClick={exportAllReports}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2" onClick={exportAllReports}>
               <Download className="h-4 w-4" />
               Export All
             </Button>
             <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="w-full sm:w-auto flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   Create Report
                 </Button>
@@ -756,7 +756,7 @@ const ReportsPage: React.FC = () => {
             <CardTitle>Report Management</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -874,8 +874,8 @@ const ReportsPage: React.FC = () => {
                 </div>
               ) : (
                 filteredReports.map((report) => (
-                  <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
+                  <div key={report.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                    <div className="flex items-start gap-4">
                       <div className="p-2 bg-blue-100 rounded-lg">
                         <FileText className="h-6 w-6 text-blue-600" />
                       </div>
@@ -887,19 +887,19 @@ const ReportsPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-left sm:text-right">
                         <div className="text-sm font-medium">Last Generated</div>
                         <div className="text-sm text-gray-500">{report.lastGenerated}</div>
                         <div className="text-sm text-gray-500">Next: {report.nextScheduled}</div>
                       </div>
                       {getStatusBadge(report.status)}
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleViewClick(report)}>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewClick(report)}>
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleEditClick(report)}>
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleEditClick(report)}>
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
                         </Button>

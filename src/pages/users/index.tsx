@@ -118,12 +118,12 @@ const UsersPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Users & Roles</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage system users, roles, and permissions</p>
           </div>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <UserPlus className="h-4 w-4 mr-2" />
             Add User
           </Button>
@@ -179,7 +179,7 @@ const UsersPage: React.FC = () => {
         {/* Search and Filter */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search users..." className="pl-10" />
@@ -213,7 +213,7 @@ const UsersPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <tr key={user.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 align-top">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -258,15 +258,9 @@ const UsersPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <Button variant="ghost" size="sm" className="w-full sm:w-auto"><Eye className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" className="w-full sm:w-auto"><Edit className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" className="w-full sm:w-auto"><MoreHorizontal className="h-4 w-4" /></Button>
                         </div>
                       </td>
                     </tr>

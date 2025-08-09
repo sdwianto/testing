@@ -179,21 +179,21 @@ const DataManagementPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Data Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage, backup, and maintain system data</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Now
             </Button>
@@ -270,8 +270,8 @@ const DataManagementPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {dataCategories.map((category, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                {dataCategories.map((category, index) => (
+                  <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 align-top">
                       <td className="py-3 px-4">
                         <div className="font-medium">{category.name}</div>
                       </td>
@@ -332,7 +332,7 @@ const DataManagementPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {backupHistory.map((backup) => (
-                  <div key={backup.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={backup.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${getStatusColor(backup.status)}`}></div>
                       <div>
@@ -365,7 +365,7 @@ const DataManagementPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {syncLogs.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={log.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${getStatusColor(log.status)}`}></div>
                       <div>

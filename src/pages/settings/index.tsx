@@ -168,17 +168,17 @@ const SettingsPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">System Settings</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage system configuration, users, and security settings</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
               <Download className="h-4 w-4" />
               Export Config
             </Button>
-            <Button className="flex items-center gap-2">
+            <Button className="w-full sm:w-auto flex items-center gap-2">
               <Save className="h-4 w-4" />
               Save Changes
             </Button>
@@ -246,7 +246,7 @@ const SettingsPage: React.FC = () => {
             <CardTitle>User Management</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -336,12 +336,12 @@ const SettingsPage: React.FC = () => {
                     <h3 className="font-semibold text-lg border-b pb-2">{category.category}</h3>
                     <div className="space-y-4">
                       {category.settings.map((setting, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                           <div>
                             <div className="font-medium">{setting.name}</div>
                             <div className="text-sm text-gray-500">Current: {setting.value}</div>
                           </div>
-                          <Button size="sm" variant="outline">Edit</Button>
+                          <Button size="sm" variant="outline" className="w-full sm:w-auto">Edit</Button>
                         </div>
                       ))}
                     </div>

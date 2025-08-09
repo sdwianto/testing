@@ -420,15 +420,15 @@ const RentalPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Rental & Maintenance</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage equipment rentals, maintenance schedules, and service records</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Dialog open={isScheduleMaintenanceDialogOpen} onOpenChange={setIsScheduleMaintenanceDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
                   <Wrench className="h-4 w-4" />
                   Schedule Maintenance
                 </Button>
@@ -536,7 +536,7 @@ const RentalPage: React.FC = () => {
 
             <Dialog open={isNewRentalDialogOpen} onOpenChange={setIsNewRentalDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="w-full sm:w-auto flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   New Rental
                 </Button>
@@ -719,7 +719,7 @@ const RentalPage: React.FC = () => {
         {/* Equipment Management */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle>Equipment Management</CardTitle>
               {hasActiveFilters && (
                 <Button 
@@ -987,7 +987,7 @@ const RentalPage: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {maintenanceRecords.map((record) => (
-                <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={record.id} className="flex flex-col gap-3 p-4 border rounded-lg">
                   <div className="flex items-center gap-4">
                     {getStatusIcon(record.status)}
                     <div>
@@ -998,13 +998,15 @@ const RentalPage: React.FC = () => {
                       <div className="text-sm text-gray-500 mt-1">{record.description}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
+                  <div className="flex flex-wrap items-center gap-2 justify-between">
+                    <div className="text-left sm:text-right">
                       <div className="text-sm font-medium">Scheduled</div>
                       <div className="text-sm text-gray-500">{record.scheduledDate}</div>
                     </div>
-                    {getStatusBadge(record.status)}
-                    <Button size="sm" variant="outline" onClick={() => handleViewMaintenanceClick(record)}>View Details</Button>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(record.status)}
+                      <Button size="sm" variant="outline" onClick={() => handleViewMaintenanceClick(record)}>View Details</Button>
+                    </div>
                   </div>
                 </div>
               ))}

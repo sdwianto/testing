@@ -364,7 +364,7 @@ const InventoryPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Inventory Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage your inventory, track stock levels, and monitor supplies</p>
@@ -604,7 +604,7 @@ const InventoryPage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

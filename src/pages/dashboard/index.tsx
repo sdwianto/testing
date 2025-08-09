@@ -132,7 +132,7 @@ const DashboardPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NextGen ERP Dashboard</h1>
             <p className="text-gray-600 dark:text-gray-400">Real-time overview of your business operations</p>
@@ -321,8 +321,8 @@ const DashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg border">
+                {recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg border">
                   <div className="flex items-center gap-3">
                     {getStatusIcon(activity.status)}
                     <div>

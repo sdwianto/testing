@@ -642,15 +642,15 @@ const FinancePage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Finance & Accounting</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage financial transactions, accounts, and reporting</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Dialog open={isNewInvoiceDialogOpen} onOpenChange={setIsNewInvoiceDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
                   <Receipt className="h-4 w-4" />
                   New Invoice
                 </Button>
@@ -736,7 +736,7 @@ const FinancePage: React.FC = () => {
 
             <Dialog open={isNewTransactionDialogOpen} onOpenChange={setIsNewTransactionDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="w-full sm:w-auto flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   New Transaction
                 </Button>
@@ -909,7 +909,7 @@ const FinancePage: React.FC = () => {
         {/* Recent Transactions */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle>Recent Transactions</CardTitle>
               {hasActiveFilters && (
                 <Button 
@@ -925,7 +925,7 @@ const FinancePage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1096,8 +1096,8 @@ const FinancePage: React.FC = () => {
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
+                  <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                    <div className="flex items-start gap-4">
                       {getTypeIcon(transaction.type)}
                       <div>
                         <div className="font-medium">{transaction.description}</div>
@@ -1106,16 +1106,16 @@ const FinancePage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-left sm:text-right">
                         <div className={`font-medium ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(transaction.amount)}
                         </div>
                       </div>
                       {getStatusBadge(transaction.status)}
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleViewTransactionClick(transaction)}>View</Button>
-                        <Button size="sm" variant="outline" onClick={() => handleEditTransactionClick(transaction)}>Edit</Button>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewTransactionClick(transaction)}>View</Button>
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleEditTransactionClick(transaction)}>Edit</Button>
                       </div>
                     </div>
                   </div>

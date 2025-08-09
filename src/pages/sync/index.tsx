@@ -226,17 +226,17 @@ const OfflineSyncPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Offline Sync</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage offline synchronization across all devices</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <RefreshCw className="h-4 w-4 mr-2" />
               Force Sync
             </Button>
@@ -391,7 +391,7 @@ const OfflineSyncPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {syncQueue.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${getStatusColor(item.status)}`}></div>
                       <div>
@@ -429,7 +429,7 @@ const OfflineSyncPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {conflicts.map((conflict) => (
-                  <div key={conflict.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={conflict.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${getStatusColor(conflict.status)}`}></div>
                       <div>

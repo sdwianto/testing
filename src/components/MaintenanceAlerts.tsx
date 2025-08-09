@@ -86,7 +86,7 @@ export const MaintenanceAlerts: React.FC<MaintenanceAlertsProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
             Maintenance Alerts
@@ -94,7 +94,7 @@ export const MaintenanceAlerts: React.FC<MaintenanceAlertsProps> = ({
               {alerts.length}
             </Badge>
           </div>
-          <Button variant="outline" size="sm" onClick={onViewAll}>
+          <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={onViewAll}>
             View All
             <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
@@ -108,7 +108,7 @@ export const MaintenanceAlerts: React.FC<MaintenanceAlertsProps> = ({
               className={`p-3 rounded-lg border ${getAlertTypeColor(alert.alertType)} cursor-pointer hover:shadow-sm transition-shadow`}
               onClick={() => onViewAlert(alert.id)}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-3">
                   {getAlertIcon(alert.alertType)}
                   <div className="flex-1">
@@ -117,7 +117,7 @@ export const MaintenanceAlerts: React.FC<MaintenanceAlertsProps> = ({
                       <span className="text-xs text-muted-foreground">({alert.equipmentCode})</span>
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge className={getPriorityColor(alert.priority)}>
                         {alert.priority}
                       </Badge>
@@ -134,7 +134,7 @@ export const MaintenanceAlerts: React.FC<MaintenanceAlertsProps> = ({
                     </div>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
             </div>
           ))}

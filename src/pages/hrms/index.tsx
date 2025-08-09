@@ -656,15 +656,15 @@ const HRMSPage: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">HRMS & Payroll</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage employees, attendance, leave, and payroll</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Dialog open={isPayrollReportsDialogOpen} onOpenChange={setIsPayrollReportsDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Payroll Report
                 </Button>
@@ -681,7 +681,7 @@ const HRMSPage: React.FC = () => {
 
             <Dialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="w-full sm:w-auto flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
                   Add Employee
                 </Button>
@@ -901,7 +901,7 @@ const HRMSPage: React.FC = () => {
         {/* Employee Management */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <CardTitle>Employee Management</CardTitle>
               {hasActiveFilters && (
                 <Button 
@@ -917,7 +917,7 @@ const HRMSPage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1169,11 +1169,11 @@ const HRMSPage: React.FC = () => {
         {/* Leave Management */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <CardTitle>Leave Management</CardTitle>
               <Button 
                 onClick={() => setIsNewLeaveDialogOpen(true)}
-                className="flex items-center gap-2"
+                className="w-full sm:w-auto flex items-center gap-2"
               >
                 <Calendar className="h-4 w-4" />
                 New Leave Request
@@ -1183,8 +1183,8 @@ const HRMSPage: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {leaveRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
+                <div key={request.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                  <div className="flex items-start gap-4">
                     <Calendar className="h-4 w-4 text-blue-500" />
                     <div>
                       <div className="font-medium">{request.employeeName}</div>
@@ -1196,21 +1196,16 @@ const HRMSPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="text-left sm:text-right">
                       <div className="text-sm font-medium">Reason</div>
                       <div className="text-sm text-gray-500">{request.reason}</div>
                     </div>
                     {getStatusBadge(request.status)}
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleViewLeaveClick(request)}>View Details</Button>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewLeaveClick(request)}>View Details</Button>
                       {request.status === 'pending' && (
-                        <Button 
-                          size="sm" 
-                          variant="default" 
-                          onClick={() => handleLeaveApprovalClick(request)}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
+                        <Button size="sm" className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700" onClick={() => handleLeaveApprovalClick(request)}>
                           Leave Approval
                         </Button>
                       )}
