@@ -3,7 +3,35 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting ERP database seeding...');
+  console.log('🌱 Starting database seeding for P1 Core Platform...');
+
+  // ========================================
+  // TENANT SETUP (P1 - Multi-tenant)
+  // ========================================
+
+  // Create Default Tenant
+  console.log('Creating default tenant...');
+  const defaultTenant = await prisma.tenant.upsert({
+    where: { code: 'CA-MINE' },
+    update: {},
+    create: {
+      name: 'CA Mine',
+      code: 'CA-MINE',
+      domain: 'ca-mine.local',
+      isActive: true,
+      settings: {
+        currency: 'PGK',
+        timezone: 'Pacific/Port_Moresby',
+        dateFormat: 'DD/MM/YYYY',
+        features: {
+          operations: true,
+          inventory: true,
+          crm: true,
+          offline: true
+        }
+      }
+    }
+  });
 
   // ========================================
   // CORE SYSTEM SEEDING
@@ -12,65 +40,42 @@ async function main() {
   // Create Roles
   console.log('Creating roles...');
   const adminRole = await prisma.role.upsert({
-    where: { name: 'Administrator' },
+    where: { name: 'ADMIN' },
     update: {},
     create: {
-      name: 'Administrator',
-      description: 'Full system access',
-      permissions: [
-        'user:read', 'user:write', 'user:delete',
-        'role:read', 'role:write', 'role:delete',
-        'department:read', 'department:write', 'department:delete',
-        'product:read', 'product:write', 'product:delete',
-        'inventory:read', 'inventory:write', 'inventory:delete',
-        'order:read', 'order:write', 'order:delete',
-        'finance:read', 'finance:write', 'finance:delete',
-        'hr:read', 'hr:write', 'hr:delete',
-        'crm:read', 'crm:write', 'crm:delete',
-        'equipment:read', 'equipment:write', 'equipment:delete',
-        'maintenance:read', 'maintenance:write', 'maintenance:delete',
-        'rental:read', 'rental:write', 'rental:delete',
-        'report:read', 'report:write',
-        'audit:read'
-      ]
+      name: 'ADMIN',
+      description: 'System Administrator with full access',
+      permissions: ['all']
     }
   });
 
   const managerRole = await prisma.role.upsert({
-    where: { name: 'Manager' },
+    where: { name: 'MANAGER' },
     update: {},
     create: {
-      name: 'Manager',
-      description: 'Department manager access',
-      permissions: [
-        'user:read',
-        'product:read', 'product:write',
-        'inventory:read', 'inventory:write',
-        'order:read', 'order:write',
-        'finance:read', 'finance:write',
-        'hr:read', 'hr:write',
-        'crm:read', 'crm:write',
-        'equipment:read', 'equipment:write',
-        'maintenance:read', 'maintenance:write',
-        'rental:read', 'rental:write',
-        'report:read'
-      ]
+      name: 'MANAGER',
+      description: 'Department Manager with management access',
+      permissions: ['ops', 'inv', 'crm', 'orders', 'reports']
     }
   });
 
   const operatorRole = await prisma.role.upsert({
-    where: { name: 'Operator' },
+    where: { name: 'OPERATOR' },
     update: {},
     create: {
-      name: 'Operator',
-      description: 'Basic operational access',
-      permissions: [
-        'product:read',
-        'inventory:read', 'inventory:write',
-        'order:read', 'order:write',
-        'equipment:read',
-        'maintenance:read', 'maintenance:write'
-      ]
+      name: 'OPERATOR',
+      description: 'Field operator with equipment and inventory access',
+      permissions: ['ops', 'inv']
+    }
+  });
+
+  const userRole = await prisma.role.upsert({
+    where: { name: 'USER' },
+    update: {},
+    create: {
+      name: 'USER',
+      description: 'Regular user with limited access',
+      permissions: ['crm', 'orders']
     }
   });
 
@@ -82,37 +87,8 @@ async function main() {
     create: {
       name: 'Information Technology',
       code: 'IT',
-      description: 'IT and System Administration'
-    }
-  });
-
-  const financeDept = await prisma.department.upsert({
-    where: { code: 'FIN' },
-    update: {},
-    create: {
-      name: 'Finance & Accounting',
-      code: 'FIN',
-      description: 'Financial management and accounting'
-    }
-  });
-
-  const hrDept = await prisma.department.upsert({
-    where: { code: 'HR' },
-    update: {},
-    create: {
-      name: 'Human Resources',
-      code: 'HR',
-      description: 'Human resources and payroll'
-    }
-  });
-
-  const operationsDept = await prisma.department.upsert({
-    where: { code: 'OPS' },
-    update: {},
-    create: {
-      name: 'Operations',
-      code: 'OPS',
-      description: 'Daily operations and maintenance'
+      description: 'IT Department for system management',
+      isActive: true
     }
   });
 
@@ -122,456 +98,304 @@ async function main() {
     create: {
       name: 'Sales & Marketing',
       code: 'SALES',
-      description: 'Sales and customer relations'
+      description: 'Sales and marketing operations',
+      isActive: true
     }
   });
 
-  // Create Admin User (placeholder - will be linked to Clerk)
-  console.log('Creating admin user...');
-  const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@nextgen.com' },
+  const operationsDept = await prisma.department.upsert({
+    where: { code: 'OPS' },
     update: {},
     create: {
-      clerkId: 'admin_clerk_id', // This will be replaced with actual Clerk ID
-      email: 'admin@nextgen.com',
+      name: 'Operations',
+      code: 'OPS',
+      description: 'Business operations and customer service',
+      isActive: true
+    }
+  });
+
+  // Create Admin User
+  console.log('Creating admin user...');
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@nextgen-erp.com' },
+    update: {},
+    create: {
+      tenantId: defaultTenant.id, // Multi-tenant support
+      clerkId: 'admin-clerk-id',
+      email: 'admin@nextgen-erp.com',
       firstName: 'System',
       lastName: 'Administrator',
-      phone: '+67512345678',
+      phone: '+675-1234-5678',
       roleId: adminRole.id,
       departmentId: itDept.id
     }
   });
 
-  // ========================================
-  // INVENTORY & PROCUREMENT SEEDING
-  // ========================================
-
-  // Create Product Categories
-  console.log('Creating product categories...');
-  const heavyEquipmentCategory = await prisma.category.upsert({
-    where: { code: 'HEAVY-EQ' },
+  // Create Manager User
+  console.log('Creating manager user...');
+  const managerUser = await prisma.user.upsert({
+    where: { email: 'manager@nextgen-erp.com' },
     update: {},
     create: {
-      name: 'Heavy Equipment',
-      code: 'HEAVY-EQ',
-      description: 'Heavy construction and mining equipment'
+      tenantId: defaultTenant.id,
+      clerkId: 'manager-clerk-id',
+      email: 'manager@nextgen-erp.com',
+      firstName: 'Operations',
+      lastName: 'Manager',
+      phone: '+675-2345-6789',
+      roleId: managerRole.id,
+      departmentId: operationsDept.id
     }
   });
 
-  const sparePartsCategory = await prisma.category.upsert({
-    where: { code: 'SPARE-PARTS' },
+  // Create Operator User
+  console.log('Creating operator user...');
+  const operatorUser = await prisma.user.upsert({
+    where: { email: 'operator@nextgen-erp.com' },
     update: {},
     create: {
-      name: 'Spare Parts',
-      code: 'SPARE-PARTS',
-      description: 'Equipment spare parts and components'
-    }
-  });
-
-  const toolsCategory = await prisma.category.upsert({
-    where: { code: 'TOOLS' },
-    update: {},
-    create: {
-      name: 'Tools & Accessories',
-      code: 'TOOLS',
-      description: 'Hand tools and equipment accessories'
-    }
-  });
-
-  const consumablesCategory = await prisma.category.upsert({
-    where: { code: 'CONSUMABLES' },
-    update: {},
-    create: {
-      name: 'Consumables',
-      code: 'CONSUMABLES',
-      description: 'Consumable materials and supplies'
-    }
-  });
-
-  // Create Products
-  console.log('Creating products...');
-  const excavator = await prisma.product.upsert({
-    where: { sku: 'EXC-001' },
-    update: {},
-    create: {
-      name: 'Excavator Komatsu PC200',
-      code: 'EXC-001',
-      sku: 'EXC-001',
-      description: '20-ton hydraulic excavator for construction and mining',
-      price: 500000000, // 500 million IDR
-      costPrice: 450000000,
-      categoryId: heavyEquipmentCategory.id,
-      minStockLevel: 1,
-      maxStockLevel: 5,
-      currentStock: 2,
-      unitOfMeasure: 'UNIT',
-      isService: false,
-      createdBy: adminUser.id
-    }
-  });
-
-  const bulldozer = await prisma.product.upsert({
-    where: { sku: 'BULL-001' },
-    update: {},
-    create: {
-      name: 'Bulldozer Caterpillar D6',
-      code: 'BULL-001',
-      sku: 'BULL-001',
-      description: 'Track-type tractor for earthmoving operations',
-      price: 750000000, // 750 million IDR
-      costPrice: 675000000,
-      categoryId: heavyEquipmentCategory.id,
-      minStockLevel: 1,
-      maxStockLevel: 3,
-      currentStock: 1,
-      unitOfMeasure: 'UNIT',
-      isService: false,
-      createdBy: adminUser.id
-    }
-  });
-
-  const hydraulicPump = await prisma.product.upsert({
-    where: { sku: 'HP-001' },
-    update: {},
-    create: {
-      name: 'Hydraulic Pump Assembly',
-      code: 'HP-001',
-      sku: 'HP-001',
-      description: 'Replacement hydraulic pump for excavators',
-      price: 15000000, // 15 million IDR
-      costPrice: 12000000,
-      categoryId: sparePartsCategory.id,
-      minStockLevel: 5,
-      maxStockLevel: 20,
-      currentStock: 12,
-      unitOfMeasure: 'PCS',
-      isService: false,
-      createdBy: adminUser.id
-    }
-  });
-
-  const safetyHelmet = await prisma.product.upsert({
-    where: { sku: 'SH-001' },
-    update: {},
-    create: {
-      name: 'Safety Helmet',
-      code: 'SH-001',
-      sku: 'SH-001',
-      description: 'Industrial safety helmet with chin strap',
-      price: 150000, // 150k IDR
-      costPrice: 100000,
-      categoryId: toolsCategory.id,
-      minStockLevel: 50,
-      maxStockLevel: 200,
-      currentStock: 150,
-      unitOfMeasure: 'PCS',
-      isService: false,
-      createdBy: adminUser.id
-    }
-  });
-
-  const dieselFuel = await prisma.product.upsert({
-    where: { sku: 'FUEL-001' },
-    update: {},
-    create: {
-      name: 'Diesel Fuel',
-      code: 'FUEL-001',
-      sku: 'FUEL-001',
-      description: 'High-quality diesel fuel for heavy equipment',
-      price: 15000, // 15k IDR per liter
-      costPrice: 12000,
-      categoryId: consumablesCategory.id,
-      minStockLevel: 1000,
-      maxStockLevel: 5000,
-      currentStock: 3000,
-      unitOfMeasure: 'LITER',
-      isService: false,
-      createdBy: adminUser.id
-    }
-  });
-
-  // Create Warehouses
-  console.log('Creating warehouses...');
-  const mainWarehouse = await prisma.warehouse.upsert({
-    where: { code: 'MAIN-WH' },
-    update: {},
-    create: {
-      name: 'Main Warehouse',
-      code: 'MAIN-WH',
-      address: 'Port Moresby Industrial Area, Papua New Guinea',
-      contactPerson: 'John Smith',
-      phone: '+67512345678',
-      email: 'warehouse@nextgen.com'
-    }
-  });
-
-  const siteWarehouse = await prisma.warehouse.upsert({
-    where: { code: 'SITE-WH' },
-    update: {},
-    create: {
-      name: 'Site Warehouse',
-      code: 'SITE-WH',
-      address: 'Mining Site, Highlands Region, Papua New Guinea',
-      contactPerson: 'Mike Johnson',
-      phone: '+67587654321',
-      email: 'site-warehouse@nextgen.com'
-    }
-  });
-
-  // Create Inventory Items
-  console.log('Creating inventory items...');
-  await prisma.inventoryItem.upsert({
-    where: {
-      productId_warehouseId: {
-        productId: excavator.id,
-        warehouseId: mainWarehouse.id
-      }
-    },
-    update: {},
-    create: {
-      productId: excavator.id,
-      warehouseId: mainWarehouse.id,
-      quantity: 2,
-      reservedQuantity: 0,
-      availableQuantity: 2
-    }
-  });
-
-  await prisma.inventoryItem.upsert({
-    where: {
-      productId_warehouseId: {
-        productId: bulldozer.id,
-        warehouseId: mainWarehouse.id
-      }
-    },
-    update: {},
-    create: {
-      productId: bulldozer.id,
-      warehouseId: mainWarehouse.id,
-      quantity: 1,
-      reservedQuantity: 0,
-      availableQuantity: 1
-    }
-  });
-
-  await prisma.inventoryItem.upsert({
-    where: {
-      productId_warehouseId: {
-        productId: hydraulicPump.id,
-        warehouseId: mainWarehouse.id
-      }
-    },
-    update: {},
-    create: {
-      productId: hydraulicPump.id,
-      warehouseId: mainWarehouse.id,
-      quantity: 8,
-      reservedQuantity: 0,
-      availableQuantity: 8
-    }
-  });
-
-  await prisma.inventoryItem.upsert({
-    where: {
-      productId_warehouseId: {
-        productId: hydraulicPump.id,
-        warehouseId: siteWarehouse.id
-      }
-    },
-    update: {},
-    create: {
-      productId: hydraulicPump.id,
-      warehouseId: siteWarehouse.id,
-      quantity: 4,
-      reservedQuantity: 0,
-      availableQuantity: 4
-    }
-  });
-
-  // Create Suppliers
-  console.log('Creating suppliers...');
-  const komatsuSupplier = await prisma.supplier.upsert({
-    where: { code: 'KOMATSU' },
-    update: {},
-    create: {
-      name: 'Komatsu Indonesia',
-      code: 'KOMATSU',
-      contactPerson: 'David Chen',
-      email: 'sales@komatsu.co.id',
-      phone: '+622123456789',
-      address: 'Jakarta, Indonesia',
-      taxNumber: '123456789'
-    }
-  });
-
-  const caterpillarSupplier = await prisma.supplier.upsert({
-    where: { code: 'CAT' },
-    update: {},
-    create: {
-      name: 'Caterpillar Asia Pacific',
-      code: 'CAT',
-      contactPerson: 'Sarah Wilson',
-      email: 'info@cat.com',
-      phone: '+65987654321',
-      address: 'Singapore',
-      taxNumber: '987654321'
+      tenantId: defaultTenant.id,
+      clerkId: 'operator-clerk-id',
+      email: 'operator@nextgen-erp.com',
+      firstName: 'Field',
+      lastName: 'Operator',
+      phone: '+675-3456-7890',
+      roleId: operatorRole.id,
+      departmentId: operationsDept.id
     }
   });
 
   // ========================================
-  // EQUIPMENT & MAINTENANCE SEEDING
+  // OPERATIONS SEEDING (P1)
   // ========================================
 
   // Create Equipment
   console.log('Creating equipment...');
-  const excavatorEquipment = await prisma.equipment.upsert({
-    where: { code: 'EQ-EXC-001' },
-    update: {},
-    create: {
-      name: 'Excavator Komatsu PC200',
-      code: 'EQ-EXC-001',
-      model: 'PC200-8',
-      serialNumber: 'KOM2024001',
-      manufacturer: 'Komatsu',
-      yearManufactured: 2024,
-      categoryId: heavyEquipmentCategory.id,
-      purchaseDate: new Date('2024-01-15'),
-      purchasePrice: 450000000,
-      currentValue: 450000000,
-      status: 'AVAILABLE',
-      location: 'Main Yard',
-      lastMaintenanceDate: new Date('2024-01-15'),
-      nextMaintenanceDate: new Date('2024-04-15'),
-      totalOperatingHours: 0,
-      createdBy: adminUser.id
+  const excavator = await prisma.equipment.create({
+    data: {
+      tenantId: defaultTenant.id,
+      code: 'EXC-001',
+      type: 'Excavator',
+      description: 'CAT 320D Excavator',
+      currentSiteId: 'SITE-A',
+      acquisitionCost: 500000.00,
+      currentValue: 450000.00,
+      isActive: true
     }
   });
 
-  const bulldozerEquipment = await prisma.equipment.upsert({
-    where: { code: 'EQ-BULL-001' },
-    update: {},
-    create: {
-      name: 'Bulldozer Caterpillar D6',
-      code: 'EQ-BULL-001',
-      model: 'D6T',
-      serialNumber: 'CAT2024001',
-      manufacturer: 'Caterpillar',
-      yearManufactured: 2024,
-      categoryId: heavyEquipmentCategory.id,
-      purchaseDate: new Date('2024-02-01'),
-      purchasePrice: 675000000,
-      currentValue: 675000000,
-      status: 'AVAILABLE',
-      location: 'Main Yard',
-      lastMaintenanceDate: new Date('2024-02-01'),
-      nextMaintenanceDate: new Date('2024-05-01'),
-      totalOperatingHours: 0,
-      createdBy: adminUser.id
+  const bulldozer = await prisma.equipment.create({
+    data: {
+      tenantId: defaultTenant.id,
+      code: 'BUL-001',
+      type: 'Bulldozer',
+      description: 'CAT D6T Bulldozer',
+      currentSiteId: 'SITE-B',
+      acquisitionCost: 400000.00,
+      currentValue: 380000.00,
+      isActive: true
+    }
+  });
+
+  const loader = await prisma.equipment.create({
+    data: {
+      tenantId: defaultTenant.id,
+      code: 'LDR-001',
+      type: 'Loader',
+      description: 'CAT 950M Loader',
+      currentSiteId: 'SITE-A',
+      acquisitionCost: 350000.00,
+      currentValue: 320000.00,
+      isActive: true
+    }
+  });
+
+  // Create Usage Logs
+  console.log('Creating usage logs...');
+  await prisma.usageLog.create({
+    data: {
+      tenantId: defaultTenant.id,
+      equipmentId: excavator.id,
+      shiftDate: new Date('2024-01-15'),
+      hoursUsed: 8.5,
+      loadUnits: 120.0,
+      operatorId: operatorUser.id,
+      notes: 'Normal operation, no issues'
+    }
+  });
+
+  await prisma.usageLog.create({
+    data: {
+      tenantId: defaultTenant.id,
+      equipmentId: bulldozer.id,
+      shiftDate: new Date('2024-01-15'),
+      hoursUsed: 7.0,
+      loadUnits: 95.0,
+      operatorId: operatorUser.id,
+      notes: 'Heavy load operations'
+    }
+  });
+
+  // Create Breakdowns
+  console.log('Creating breakdowns...');
+  await prisma.breakdown.create({
+    data: {
+      tenantId: defaultTenant.id,
+      equipmentId: loader.id,
+      startAt: new Date('2024-01-16T08:00:00Z'),
+      endAt: new Date('2024-01-16T14:30:00Z'),
+      reason: 'Hydraulic system failure',
+      notes: 'Hydraulic pump replacement required',
+      reportedBy: operatorUser.id,
+      resolvedBy: managerUser.id
+    }
+  });
+
+  // Create Work Orders
+  console.log('Creating work orders...');
+  await prisma.workOrder.create({
+    data: {
+      tenantId: defaultTenant.id,
+      equipmentId: excavator.id,
+      type: 'preventive',
+      status: 'planned',
+      scheduledDate: new Date('2024-02-01'),
+      estimatedCost: 2500.00,
+      description: 'Monthly preventive maintenance',
+      assignedTo: managerUser.id
     }
   });
 
   // ========================================
-  // FINANCE & ACCOUNTING SEEDING
+  // INVENTORY SEEDING (P1)
   // ========================================
 
-  // Create Chart of Accounts
-  console.log('Creating chart of accounts...');
-  const cashAccount = await prisma.account.upsert({
-    where: { accountNumber: '1000' },
-    update: {},
-    create: {
-      accountNumber: '1000',
-      name: 'Cash',
-      type: 'ASSET',
-      balance: 1000000000 // 1 billion IDR
+  // Create Items
+  console.log('Creating items...');
+  const hydraulicOil = await prisma.item.create({
+    data: {
+      tenantId: defaultTenant.id,
+      number: 'HYD-OIL-001',
+      description: 'Hydraulic Oil 46',
+      type: 'Lubricant',
+      stdCost: 25.00,
+      lastCost: 24.50,
+      avgCost: 24.75,
+      isActive: true
     }
   });
 
-  const accountsReceivable = await prisma.account.upsert({
-    where: { accountNumber: '1100' },
-    update: {},
-    create: {
-      accountNumber: '1100',
-      name: 'Accounts Receivable',
-      type: 'ASSET',
-      balance: 0
+  const engineFilter = await prisma.item.create({
+    data: {
+      tenantId: defaultTenant.id,
+      number: 'ENG-FIL-001',
+      description: 'Engine Air Filter',
+      type: 'Filter',
+      stdCost: 45.00,
+      lastCost: 43.00,
+      avgCost: 44.00,
+      isActive: true
     }
   });
 
-  const inventoryAccount = await prisma.account.upsert({
-    where: { accountNumber: '1200' },
-    update: {},
-    create: {
-      accountNumber: '1200',
-      name: 'Inventory',
-      type: 'ASSET',
-      balance: 0
+  const hydraulicPump = await prisma.item.create({
+    data: {
+      tenantId: defaultTenant.id,
+      number: 'HYD-PMP-001',
+      description: 'Hydraulic Pump Assembly',
+      type: 'Component',
+      stdCost: 2500.00,
+      lastCost: 2450.00,
+      avgCost: 2475.00,
+      isActive: true
     }
   });
 
-  const equipmentAccount = await prisma.account.upsert({
-    where: { accountNumber: '1300' },
-    update: {},
-    create: {
-      accountNumber: '1300',
-      name: 'Equipment',
-      type: 'ASSET',
-      balance: 1125000000 // 1.125 billion IDR
+  // Create Item Branches
+  console.log('Creating item branches...');
+  const hydraulicOilBranch = await prisma.itemBranch.create({
+    data: {
+      tenantId: defaultTenant.id,
+      itemId: hydraulicOil.id,
+      siteId: 'SITE-A',
+      reorderPoint: 50,
+      reorderQty: 100,
+      safetyStock: 25,
+      leadTimeDays: 7,
+      lotSize: 1
     }
   });
 
-  const accountsPayable = await prisma.account.upsert({
-    where: { accountNumber: '2000' },
-    update: {},
-    create: {
-      accountNumber: '2000',
-      name: 'Accounts Payable',
-      type: 'LIABILITY',
-      balance: 0
+  const engineFilterBranch = await prisma.itemBranch.create({
+    data: {
+      tenantId: defaultTenant.id,
+      itemId: engineFilter.id,
+      siteId: 'SITE-A',
+      reorderPoint: 20,
+      reorderQty: 50,
+      safetyStock: 10,
+      leadTimeDays: 5,
+      lotSize: 1
     }
   });
 
-  const revenueAccount = await prisma.account.upsert({
-    where: { accountNumber: '4000' },
-    update: {},
-    create: {
-      accountNumber: '4000',
-      name: 'Sales Revenue',
-      type: 'REVENUE',
-      balance: 0
+  // Create Item Locations
+  console.log('Creating item locations...');
+  await prisma.itemLocation.create({
+    data: {
+      tenantId: defaultTenant.id,
+      itemBranchId: hydraulicOilBranch.id,
+      bin: 'A-01-01',
+      lotNumber: 'LOT-2024-001',
+      qtyOnHand: 75,
+      qtyCommitted: 10,
+      qtyOnOrder: 0
     }
   });
 
-  const rentalRevenueAccount = await prisma.account.upsert({
-    where: { accountNumber: '4100' },
-    update: {},
-    create: {
-      accountNumber: '4100',
-      name: 'Rental Revenue',
-      type: 'REVENUE',
-      balance: 0
+  await prisma.itemLocation.create({
+    data: {
+      tenantId: defaultTenant.id,
+      itemBranchId: engineFilterBranch.id,
+      bin: 'A-02-01',
+      lotNumber: 'LOT-2024-002',
+      qtyOnHand: 30,
+      qtyCommitted: 5,
+      qtyOnOrder: 0
     }
   });
 
-  const costOfGoodsSold = await prisma.account.upsert({
-    where: { accountNumber: '5000' },
-    update: {},
-    create: {
-      accountNumber: '5000',
-      name: 'Cost of Goods Sold',
-      type: 'EXPENSE',
-      balance: 0
+  // Create Inventory Transactions
+  console.log('Creating inventory transactions...');
+  await prisma.inventoryTx.create({
+    data: {
+      tenantId: defaultTenant.id,
+      itemId: hydraulicOil.id,
+      siteId: 'SITE-A',
+      location: 'A-01-01',
+      txType: 'GRN',
+      qty: 100,
+      unitCost: 24.50,
+      refType: 'PO',
+      refId: 'PO-2024-001',
+      userId: managerUser.id,
+      notes: 'Initial stock receipt'
     }
   });
 
-  const maintenanceExpense = await prisma.account.upsert({
-    where: { accountNumber: '5100' },
-    update: {},
-    create: {
-      accountNumber: '5100',
-      name: 'Maintenance Expense',
-      type: 'EXPENSE',
-      balance: 0
+  await prisma.inventoryTx.create({
+    data: {
+      tenantId: defaultTenant.id,
+      itemId: hydraulicOil.id,
+      siteId: 'SITE-A',
+      location: 'A-01-01',
+      txType: 'GI',
+      qty: -15,
+      unitCost: 24.50,
+      refType: 'WO',
+      refId: 'WO-2024-001',
+      userId: operatorUser.id,
+      notes: 'Used for equipment maintenance'
     }
   });
 
@@ -579,101 +403,246 @@ async function main() {
   // CRM SEEDING
   // ========================================
 
-  // Create Customers
-  console.log('Creating customers...');
-  const miningCorp = await prisma.customer.upsert({
+  // Create Sample Customers
+  console.log('Creating sample customers...');
+  const customer1 = await prisma.customer.upsert({
     where: { customerNumber: 'CUST-001' },
     update: {},
     create: {
+      tenantId: defaultTenant.id, // Multi-tenant support
       customerNumber: 'CUST-001',
-      name: 'PNG Mining Corporation',
+      name: 'Highlands Construction Ltd',
       type: 'COMPANY',
-      email: 'procurement@pngmining.com',
-      phone: '+67512345678',
-      address: 'Port Moresby, Papua New Guinea',
-      city: 'Port Moresby',
-      state: 'National Capital District',
-      country: 'Papua New Guinea',
-      companyName: 'PNG Mining Corporation',
-      taxNumber: 'PNG123456789',
-      industry: 'Mining',
+      industry: 'Construction',
       status: 'ACTIVE',
-      source: 'Direct Contact',
-      creditLimit: 1000000000, // 1 billion IDR
-      currentBalance: 0,
+      email: 'contact@highlands-construction.pg',
+      phone: '+675-2345-6789',
+      address: 'Port Moresby, Papua New Guinea',
       createdBy: adminUser.id
     }
   });
 
-  const constructionLtd = await prisma.customer.upsert({
+  const customer2 = await prisma.customer.upsert({
     where: { customerNumber: 'CUST-002' },
     update: {},
     create: {
+      tenantId: defaultTenant.id,
       customerNumber: 'CUST-002',
-      name: 'Highlands Construction Ltd',
+      name: 'Mining Solutions Inc',
       type: 'COMPANY',
-      email: 'info@highlandsconstruction.pg',
-      phone: '+67587654321',
-      address: 'Goroka, Eastern Highlands, Papua New Guinea',
-      city: 'Goroka',
-      state: 'Eastern Highlands',
-      country: 'Papua New Guinea',
-      companyName: 'Highlands Construction Ltd',
-      taxNumber: 'PNG987654321',
-      industry: 'Construction',
+      industry: 'Mining',
       status: 'ACTIVE',
-      source: 'Referral',
-      creditLimit: 500000000, // 500 million IDR
-      currentBalance: 0,
+      email: 'info@mining-solutions.pg',
+      phone: '+675-3456-7890',
+      address: 'Lae, Papua New Guinea',
       createdBy: adminUser.id
     }
   });
 
-  // ========================================
-  // HRMS SEEDING
-  // ========================================
-
-  // Create Employees (placeholder - will be linked to actual users)
-  console.log('Creating employees...');
-  const hrManager = await prisma.employee.upsert({
-    where: { employeeNumber: 'EMP-001' },
+  const customer3 = await prisma.customer.upsert({
+    where: { customerNumber: 'CUST-003' },
     update: {},
     create: {
-      employeeNumber: 'EMP-001',
-      userId: adminUser.id, // Placeholder
-      firstName: 'Jane',
-      lastName: 'Doe',
-      email: 'jane.doe@nextgen.com',
-      phone: '+67512345678',
-      address: 'Port Moresby, Papua New Guinea',
-      dateOfBirth: new Date('1985-05-15'),
-      gender: 'FEMALE',
-      maritalStatus: 'MARRIED',
-      departmentId: hrDept.id,
-      position: 'HR Manager',
-      hireDate: new Date('2024-01-01'),
-      employmentStatus: 'ACTIVE',
-      baseSalary: 25000000, // 25 million IDR per month
-      allowances: 5000000, // 5 million IDR per month
-      emergencyContactName: 'John Doe',
-      emergencyContactPhone: '+67587654321',
-      emergencyContactRelation: 'Spouse'
+      tenantId: defaultTenant.id,
+      customerNumber: 'CUST-003',
+      name: 'John Smith',
+      type: 'INDIVIDUAL',
+      industry: 'Construction',
+      status: 'ACTIVE',
+      email: 'john.smith@email.com',
+      phone: '+675-4567-8901',
+      address: 'Mount Hagen, Papua New Guinea',
+      createdBy: adminUser.id
     }
   });
 
-  console.log('✅ ERP database seeding completed successfully!');
-  console.log('📊 Summary of created data:');
-  console.log(`   - Roles: 3`);
-  console.log(`   - Departments: 5`);
-  console.log(`   - Users: 1`);
-  console.log(`   - Categories: 4`);
-  console.log(`   - Products: 5`);
-  console.log(`   - Warehouses: 2`);
-  console.log(`   - Suppliers: 2`);
-  console.log(`   - Equipment: 2`);
-  console.log(`   - Accounts: 9`);
-  console.log(`   - Customers: 2`);
-  console.log(`   - Employees: 1`);
+  // Create Sample Orders
+  console.log('Creating sample orders...');
+  const order1 = await prisma.order.upsert({
+    where: { orderNumber: 'ORD-2024-001' },
+    update: {},
+    create: {
+      tenantId: defaultTenant.id,
+      orderNumber: 'ORD-2024-001',
+      customerId: customer1.id,
+      orderDate: new Date('2024-01-15'),
+      status: 'DRAFT',
+      subtotal: 150000000, // 150 million IDR
+      grandTotal: 150000000,
+      createdBy: adminUser.id
+    }
+  });
+
+  const order2 = await prisma.order.upsert({
+    where: { orderNumber: 'ORD-2024-002' },
+    update: {},
+    create: {
+      tenantId: defaultTenant.id,
+      orderNumber: 'ORD-2024-002',
+      customerId: customer2.id,
+      orderDate: new Date('2024-01-20'),
+      status: 'CONFIRMED',
+      subtotal: 250000000, // 250 million IDR
+      grandTotal: 250000000,
+      createdBy: adminUser.id,
+      approvedBy: adminUser.id
+    }
+  });
+
+  const order3 = await prisma.order.upsert({
+    where: { orderNumber: 'ORD-2024-003' },
+    update: {},
+    create: {
+      tenantId: defaultTenant.id,
+      orderNumber: 'ORD-2024-003',
+      customerId: customer3.id,
+      orderDate: new Date('2024-01-25'),
+      status: 'DELIVERED',
+      subtotal: 75000000, // 75 million IDR
+      grandTotal: 75000000,
+      createdBy: adminUser.id,
+      approvedBy: adminUser.id
+    }
+  });
+
+  // Create Customer Contacts
+  console.log('Creating customer contacts...');
+  await prisma.customerContact.create({
+    data: {
+      tenantId: defaultTenant.id,
+      customerId: customer1.id,
+      userId: adminUser.id,
+      contactType: 'EMAIL',
+      contactDate: new Date('2024-01-15'),
+      summary: 'Initial contact with project manager',
+      details: 'Discussed equipment rental requirements for construction project',
+      followUpDate: new Date('2024-01-22'),
+      status: 'OPEN'
+    }
+  });
+
+  await prisma.customerContact.create({
+    data: {
+      tenantId: defaultTenant.id,
+      customerId: customer2.id,
+      userId: adminUser.id,
+      contactType: 'PHONE_CALL',
+      contactDate: new Date('2024-01-20'),
+      summary: 'Follow-up call with operations director',
+      details: 'Confirmed mining equipment specifications and delivery timeline',
+      followUpDate: new Date('2024-01-27'),
+      status: 'OPEN'
+    }
+  });
+
+  // ========================================
+  // AUDIT & EVENT SOURCING (P1)
+  // ========================================
+
+  // Create Audit Events
+  console.log('Creating audit events...');
+  await prisma.auditEvent.create({
+    data: {
+      tenantId: defaultTenant.id,
+      actorId: adminUser.id,
+      entity: 'Customer',
+      entityId: customer1.id,
+      action: 'created',
+      changes: { name: 'Highlands Construction Ltd', customerNumber: 'CUST-001' },
+      hash: 'audit-hash-001'
+    }
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      tenantId: defaultTenant.id,
+      actorId: adminUser.id,
+      entity: 'Order',
+      entityId: order1.id,
+      action: 'created',
+      changes: { orderNumber: 'ORD-2024-001', status: 'DRAFT' },
+      hash: 'audit-hash-002'
+    }
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      tenantId: defaultTenant.id,
+      actorId: operatorUser.id,
+      entity: 'Equipment',
+      entityId: excavator.id,
+      action: 'usage_logged',
+      changes: { hoursUsed: 8.5, loadUnits: 120.0 },
+      hash: 'audit-hash-003'
+    }
+  });
+
+  // Create Outbox Events
+  console.log('Creating outbox events...');
+  await prisma.outboxEvent.create({
+    data: {
+      tenantId: defaultTenant.id,
+      type: 'ops.equipment.created',
+      entity: 'Equipment',
+      entityId: excavator.id,
+      version: 1,
+      payload: { code: 'EXC-001', type: 'Excavator', siteId: 'SITE-A' },
+      delivered: false
+    }
+  });
+
+  await prisma.outboxEvent.create({
+    data: {
+      tenantId: defaultTenant.id,
+      type: 'inv.item.created',
+      entity: 'Item',
+      entityId: hydraulicOil.id,
+      version: 1,
+      payload: { number: 'HYD-OIL-001', description: 'Hydraulic Oil 46' },
+      delivered: false
+    }
+  });
+
+  // Create Idempotency Logs
+  console.log('Creating idempotency logs...');
+  await prisma.idempotencyLog.create({
+    data: {
+      tenantId: defaultTenant.id,
+      key: 'ops-log-usage-001',
+      hash: 'hash-ops-log-usage-001',
+      result: { id: 'usage-log-001', equipmentId: excavator.id }
+    }
+  });
+
+  await prisma.idempotencyLog.create({
+    data: {
+      tenantId: defaultTenant.id,
+      key: 'inv-create-item-001',
+      hash: 'hash-inv-create-item-001',
+      result: { id: hydraulicOil.id, number: 'HYD-OIL-001' }
+    }
+  });
+
+  console.log('✅ P1 Core Platform database seeding completed successfully!');
+  console.log('📊 Summary:');
+  console.log(`   - Tenant: 1 (CA Mine)`);
+  console.log(`   - Roles: 4 (Admin, Manager, Operator, User)`);
+  console.log(`   - Departments: 3 (IT, Sales, Operations)`);
+  console.log(`   - Users: 3 (Admin, Manager, Operator)`);
+  console.log(`   - Equipment: 3 (Excavator, Bulldozer, Loader)`);
+  console.log(`   - Usage Logs: 2`);
+  console.log(`   - Breakdowns: 1`);
+  console.log(`   - Work Orders: 1`);
+  console.log(`   - Items: 3 (Hydraulic Oil, Engine Filter, Hydraulic Pump)`);
+  console.log(`   - Item Branches: 2`);
+  console.log(`   - Item Locations: 2`);
+  console.log(`   - Inventory Transactions: 2`);
+  console.log(`   - Customers: 3`);
+  console.log(`   - Orders: 3`);
+  console.log(`   - Customer Contacts: 2`);
+  console.log(`   - Audit Events: 3`);
+  console.log(`   - Outbox Events: 2`);
+  console.log(`   - Idempotency Logs: 2`);
 }
 
 main()
@@ -681,6 +650,6 @@ main()
     console.error('❌ Error during seeding:', e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
+  .finally(() => {
+    void prisma.$disconnect();
   }); 

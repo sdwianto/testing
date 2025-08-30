@@ -43,24 +43,18 @@ A comprehensive Enterprise Resource Planning (ERP) system built for **CA Mine (M
 ## 🚀 Features
 
 ### Core ERP Modules
-- **Dashboard & Analytics**: Real-time KPI monitoring, business intelligence, and performance metrics
-- **Inventory & Procurement**: Multi-warehouse inventory management, purchase orders, supplier management
-- **Equipment & Rental**: Heavy equipment tracking, rental management, maintenance scheduling
-- **Finance & Accounting**: General ledger, accounts payable/receivable, financial reporting
-- **HRMS & Payroll**: Employee management, attendance tracking, payroll processing
+- **Dashboard**: Real-time KPI monitoring and system overview
 - **CRM**: Customer relationship management, contact tracking, sales pipeline
 - **Sales & Orders**: Order processing, customer management, payment integration
-- **Production & Operations**: Mining-specific operational workflows and tracking
+- **Settings**: System configuration and management
+- **Offline Sync**: Data synchronization capabilities
 
 ### Advanced Features
 - **Offline Capability**: PouchDB integration for offline data entry and sync
 - **Real-time Updates**: WebSocket integration for live dashboard updates
 - **Role-based Access Control**: Granular permissions and security
-- **Multi-warehouse Support**: Distributed inventory management
-- **Equipment Maintenance**: Preventive and corrective maintenance tracking
-- **Business Intelligence**: Advanced reporting and analytics
 - **Audit Trail**: Complete system activity logging
-- **Safety Compliance**: Mining safety protocols and incident tracking
+- **Customer Management**: Comprehensive CRM functionality
 
 ### Technical Features
 - **Authentication**: Clerk authentication with role-based access
@@ -268,45 +262,9 @@ nextgen-erp/
 
 ### **Dashboard (`/dashboard`)**
 - Real-time KPI monitoring
-- Business intelligence widgets
+- System overview
 - Recent activities feed
 - Quick action buttons
-- Upcoming events calendar
-
-### **Inventory (`/inventory`)**
-- Multi-warehouse inventory management
-- Stock level monitoring
-- Purchase order management
-- Supplier management
-- Inventory transactions
-
-### **Equipment (`/equipment`)**
-- Equipment tracking and management
-- Rental order processing
-- Equipment status monitoring
-- Location tracking
-- Utilization analytics
-
-### **Maintenance (`/maintenance`)**
-- Preventive maintenance scheduling
-- Corrective maintenance tracking
-- Maintenance history
-- Parts management
-- Cost tracking
-
-### **Finance (`/finance`)**
-- General ledger management
-- Accounts payable/receivable
-- Financial transactions
-- Chart of accounts
-- Financial reporting
-
-### **HRMS (`/hrms`)**
-- Employee management
-- Attendance tracking
-- Leave management
-- Payroll processing
-- Performance tracking
 
 ### **CRM (`/crm`)**
 - Customer management
@@ -315,19 +273,17 @@ nextgen-erp/
 - Customer interactions
 - Lead management
 
-### **Sales (`/sales`)**
-- Order processing
-- Customer management
-- Payment integration
-- Order tracking
-- Sales analytics
+### **Settings (`/settings`)**
+- System configuration
+- User management
+- System preferences
+- Security settings
 
-### **Reports (`/reports`)**
-- Business intelligence dashboards
-- Custom report generation
-- Data analytics
-- Performance metrics
-- Export capabilities
+### **Offline Sync (`/sync`)**
+- Data synchronization status
+- Offline queue management
+- Conflict resolution
+- Sync history
 
 ## 🔧 Available Scripts
 
@@ -353,37 +309,12 @@ The ERP system uses a comprehensive database schema with the following main modu
 - **Department**: Organizational structure
 - **AuditLog**: System activity logging
 
-### **Inventory & Procurement**
-- **Category**: Product categorization
-- **Product**: Product master data
-- **Warehouse**: Multi-warehouse support
-- **InventoryItem**: Stock levels per warehouse
-- **InventoryTransaction**: Stock movements
-- **PurchaseOrder**: Procurement management
-- **Supplier**: Supplier master data
-
-### **Equipment & Maintenance**
-- **Equipment**: Equipment master data
-- **MaintenanceRecord**: Maintenance history
-- **RentalOrder**: Equipment rental management
-
-### **Finance & Accounting**
-- **FinancialTransaction**: Financial transactions
-- **Account**: Chart of accounts
-
-### **HRMS & Payroll**
-- **Employee**: Employee master data
-- **AttendanceRecord**: Attendance tracking
-- **LeaveRequest**: Leave management
-- **PayrollRecord**: Payroll processing
-
 ### **CRM**
 - **Customer**: Customer master data
 - **CustomerContact**: Customer interactions
 
 ### **Sales & Orders**
 - **Order**: Sales order management
-- **OrderItem**: Order line items
 
 ### **Offline Sync**
 - **SyncLog**: Offline synchronization tracking

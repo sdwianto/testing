@@ -1,5 +1,6 @@
 // This is your Prisma schema file for NextGen ERP System
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Updated for P1: Core Platform & Offline Backbone
 
 generator client {
     provider = "prisma-client-js"
@@ -12,11 +13,48 @@ datasource db {
 }
 
 // ========================================
-// CORE SYSTEM & SECURITY
+// CORE SYSTEM & SECURITY (P1 - Multi-tenant)
 // ========================================
+
+model Tenant {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    domain            String?  @unique
+    isActive          Boolean  @default(true)
+    settings          Json?    // Tenant-specific settings
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    users             User[]
+    auditEvents       AuditEvent[]
+    outboxEvents      OutboxEvent[]
+    idempotencyLogs   IdempotencyLog[]
+    equipment         Equipment[]
+    usageLogs         UsageLog[]
+    breakdowns        Breakdown[]
+    workOrders        WorkOrder[]
+    items             Item[]
+    itemBranches      ItemBranch[]
+    itemLocations     ItemLocation[]
+    inventoryTxs      InventoryTx[]
+    customers         Customer[]
+    orders            Order[]
+    customerContacts  CustomerContact[]
+    syncLogs          SyncLog[]
+    posts             Post[]
+    notifications     Notification[]
+    systemConfigs     SystemConfig[]
+    purchaseRequests  PurchaseRequest[]
+    purchaseRequestItems PurchaseRequestItem[]
+    purchaseOrders    PurchaseOrder[]
+    purchaseOrderItems PurchaseOrderItem[]
+}
 
 model User {
     id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
     clerkId           String   @unique // External Clerk ID
     email             String   @unique
     firstName         String
@@ -25,6 +63,9 @@ model User {
     avatar            String?
     isActive          Boolean  @default(true)
     lastLoginAt       DateTime?
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
     
     // Role-based access control
     roleId            String
@@ -41,15 +82,20 @@ model User {
     updatedBy         String?
     
     // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
     posts             Post[]
-    auditLogs         AuditLog[]
+    auditEvents       AuditEvent[]
     createdOrders     Order[]  @relation("OrderCreator")
     approvedOrders    Order[]  @relation("OrderApprover")
-    maintenanceRecords MaintenanceRecord[]
-    inventoryTransactions InventoryTransaction[]
-    financialTransactions FinancialTransaction[]
-    employeeRecords   Employee[]
     customerContacts  CustomerContact[]
+    notifications     Notification[]
+    purchaseRequests  PurchaseRequest[] @relation("PurchaseRequestRequester")
+    approvedPurchaseRequests PurchaseRequest[] @relation("PurchaseRequestApprover")
+    createdPurchaseOrders PurchaseOrder[] @relation("PurchaseOrderCreator")
+    updatedPurchaseOrders PurchaseOrder[] @relation("PurchaseOrderUpdater")
+    
+    @@index([tenantId, email]) // Composite index (R2, R8)
+    @@index([tenantId, isActive, createdAt]) // For tenant-scoped queries
 }
 
 model Role {
@@ -77,583 +123,261 @@ model Department {
     
     // Relations
     users             User[]
-    employees         Employee[]
-}
-
-model AuditLog {
-    id                String   @id @default(uuid())
-    userId            String
-    user              User     @relation(fields: [userId], references: [id])
-    action            String   // CREATE, UPDATE, DELETE, LOGIN, etc.
-    entityType        String   // User, Product, Order, etc.
-    entityId          String?
-    oldValues         Json?
-    newValues         Json?
-    ipAddress         String?
-    userAgent         String?
-    createdAt         DateTime @default(now())
+    purchaseRequests  PurchaseRequest[]
 }
 
 // ========================================
-// INVENTORY & PROCUREMENT
+// AUDIT & EVENT SOURCING (P1 - Append-only)
 // ========================================
 
-model Category {
+model AuditEvent {
     id                String   @id @default(uuid())
-    name              String   @unique
-    code              String   @unique
-    description       String?
-    parentId          String?
-    parent            Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
-    children          Category[] @relation("CategoryHierarchy")
-    isActive          Boolean  @default(true)
+    tenantId          String   // Multi-tenant support (R2)
+    actorId           String?  // User who performed the action
+    entity            String   // Entity type (User, Order, etc.)
+    entityId          String   // Entity ID
+    action            String   // created|updated|deleted|approved|posted|...
+    changes           Json?    // Old/new values
     createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
+    hash              String   // Tamper-evidence (R12)
     
     // Relations
-    products          Product[]
-    equipment         Equipment[]
-}
-
-model Product {
-    id                String   @id @default(uuid())
-    name              String
-    code              String   @unique
-    description       String?
-    sku               String   @unique
-    barcode           String?
-    price             Int      // Price in cents
-    costPrice         Int      // Cost price in cents
-    imageUrl          String?
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    actor             User?    @relation(fields: [actorId], references: [id])
     
-    // Inventory fields
-    minStockLevel     Int      @default(0)
-    maxStockLevel     Int?
-    currentStock      Int      @default(0)
-    unitOfMeasure     String   @default("PCS")
-    
-    // Category relation
-    categoryId        String
-    category          Category @relation(fields: [categoryId], references: [id])
-    
-    // Status
-    isActive          Boolean  @default(true)
-    isService         Boolean  @default(false) // For service-based products
-    
-    // Audit fields
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    createdBy         String?
-    updatedBy         String?
-    
-    // Relations
-    orderItems        OrderItem[]
-    inventoryItems    InventoryItem[]
-    inventoryTransactions InventoryTransaction[]
-    purchaseOrderItems PurchaseOrderItem[]
-}
-
-model Warehouse {
-    id                String   @id @default(uuid())
-    name              String   @unique
-    code              String   @unique
-    address           String?
-    contactPerson     String?
-    phone             String?
-    email             String?
-    isActive          Boolean  @default(true)
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    // Relations
-    inventoryItems    InventoryItem[]
-    inventoryTransactions InventoryTransaction[]
-}
-
-model InventoryItem {
-    id                String   @id @default(uuid())
-    productId         String
-    product           Product  @relation(fields: [productId], references: [id])
-    warehouseId       String
-    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
-    quantity          Int      @default(0)
-    reservedQuantity  Int      @default(0) // For pending orders
-    availableQuantity Int      @default(0) // quantity - reservedQuantity
-    
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    @@unique([productId, warehouseId])
-}
-
-model InventoryTransaction {
-    id                String   @id @default(uuid())
-    productId         String
-    product           Product  @relation(fields: [productId], references: [id])
-    warehouseId       String
-    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
-    userId            String
-    user              User     @relation(fields: [userId], references: [id])
-    
-    transactionType   InventoryTransactionType
-    quantity          Int
-    referenceType     String?  // Order, PurchaseOrder, Adjustment, etc.
-    referenceId       String?
-    notes             String?
-    
-    createdAt         DateTime @default(now())
-}
-
-enum InventoryTransactionType {
-    IN
-    OUT
-    ADJUSTMENT
-    TRANSFER
-}
-
-model PurchaseOrder {
-    id                String   @id @default(uuid())
-    poNumber          String   @unique
-    supplierId        String
-    supplier          Supplier @relation(fields: [supplierId], references: [id])
-    
-    orderDate         DateTime
-    expectedDeliveryDate DateTime?
-    deliveryDate      DateTime?
-    
-    subtotal          Int      @default(0)
-    tax               Int      @default(0)
-    discount          Int      @default(0)
-    grandTotal        Int      @default(0)
-    
-    status            PurchaseOrderStatus @default(DRAFT)
-    notes             String?
-    
-    // Audit fields
-    createdBy         String?
-    approvedBy        String?
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    // Relations
-    items             PurchaseOrderItem[]
-}
-
-enum PurchaseOrderStatus {
-    DRAFT
-    SUBMITTED
-    APPROVED
-    ORDERED
-    PARTIALLY_RECEIVED
-    RECEIVED
-    CANCELLED
-}
-
-model PurchaseOrderItem {
-    id                String   @id @default(uuid())
-    purchaseOrderId   String
-    purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
-    productId         String
-    product           Product  @relation(fields: [productId], references: [id])
-    
-    quantity          Int
-    unitPrice         Int
-    totalPrice        Int
-    receivedQuantity  Int      @default(0)
-    
-    createdAt         DateTime @default(now())
-}
-
-model Supplier {
-    id                String   @id @default(uuid())
-    name              String
-    code              String   @unique
-    contactPerson     String?
-    email             String?
-    phone             String?
-    address           String?
-    taxNumber         String?
-    isActive          Boolean  @default(true)
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    // Relations
-    purchaseOrders    PurchaseOrder[]
+    @@index([tenantId, createdAt]) // For tenant-scoped audit queries
+    @@index([tenantId, entity, entityId]) // For entity-specific audit
 }
 
 // ========================================
-// RENTAL & MAINTENANCE
+// OUTBOX PATTERN (P1 - Event Sourcing)
+// ========================================
+
+model OutboxEvent {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    type              String   // Event type (e.g., "user.created", "order.updated")
+    entity            String   // Entity type
+    entityId          String   // Entity ID
+    version           Int      // Entity version for ordering
+    payload           Json     // Event payload
+    createdAt         DateTime @default(now())
+    delivered         Boolean  @default(false) // Delivery status
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, delivered, createdAt]) // For delivery processing
+    @@index([tenantId, type, createdAt]) // For event type queries
+}
+
+// ========================================
+// IDEMPOTENCY (P1 - R4)
+// ========================================
+
+model IdempotencyLog {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    key               String   // Idempotency key
+    hash              String   // Request hash for deduplication
+    result            Json?    // Stored result
+    committedAt       DateTime @default(now())
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@unique([tenantId, key]) // Unique per tenant
+    @@index([tenantId, committedAt]) // For cleanup
+}
+
+// ========================================
+// OPERATIONS (P1 - Equipment & Usage)
 // ========================================
 
 model Equipment {
     id                String   @id @default(uuid())
-    name              String
+    tenantId          String   // Multi-tenant support (R2)
     code              String   @unique
-    model             String?
-    serialNumber      String?  @unique
-    manufacturer      String?
-    yearManufactured  Int?
-    
-    // Equipment details
-    categoryId        String
-    category          Category @relation(fields: [categoryId], references: [id])
-    
-    purchaseDate      DateTime?
-    purchasePrice     Int?
-    currentValue      Int?
-    
-    // Status
-    status            EquipmentStatus @default(AVAILABLE)
-    location          String?
-    assignedTo        String?
-    
-    // Maintenance
-    lastMaintenanceDate DateTime?
-    nextMaintenanceDate DateTime?
-    totalOperatingHours Int @default(0)
-    
-    // Audit fields
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    createdBy         String?
-    updatedBy         String?
-    
-    // Relations
-    maintenanceRecords MaintenanceRecord[]
-    rentalOrderItems  RentalOrderItem[]
-}
-
-enum EquipmentStatus {
-    AVAILABLE
-    IN_USE
-    MAINTENANCE
-    REPAIR
-    RETIRED
-    LOST
-}
-
-model MaintenanceRecord {
-    id                String   @id @default(uuid())
-    equipmentId       String
-    equipment         Equipment @relation(fields: [equipmentId], references: [id])
-    userId            String
-    user              User     @relation(fields: [userId], references: [id])
-    
-    maintenanceType   MaintenanceType
-    description       String
-    cost              Int?
-    startDate         DateTime
-    endDate           DateTime?
-    status            MaintenanceStatus @default(SCHEDULED)
-    
-    // Parts used
-    partsUsed         Json?    // Array of parts with quantities
-    
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-}
-
-enum MaintenanceType {
-    PREVENTIVE
-    CORRECTIVE
-    EMERGENCY
-    INSPECTION
-}
-
-enum MaintenanceStatus {
-    SCHEDULED
-    IN_PROGRESS
-    COMPLETED
-    CANCELLED
-}
-
-model RentalOrder {
-    id                String   @id @default(uuid())
-    rentalNumber      String   @unique
-    customerId        String
-    customer          Customer @relation(fields: [customerId], references: [id])
-    
-    startDate         DateTime
-    endDate           DateTime
-    actualReturnDate  DateTime?
-    
-    dailyRate         Int
-    totalDays         Int
-    subtotal          Int
-    tax               Int      @default(0)
-    grandTotal        Int
-    
-    status            RentalOrderStatus @default(DRAFT)
-    notes             String?
-    
-    // Audit fields
-    createdBy         String?
-    approvedBy        String?
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-    
-    // Relations
-    items             RentalOrderItem[]
-}
-
-enum RentalOrderStatus {
-    DRAFT
-    CONFIRMED
-    IN_PROGRESS
-    COMPLETED
-    CANCELLED
-}
-
-model RentalOrderItem {
-    id                String   @id @default(uuid())
-    rentalOrderId     String
-    rentalOrder       RentalOrder @relation(fields: [rentalOrderId], references: [id])
-    equipmentId       String
-    equipment         Equipment @relation(fields: [equipmentId], references: [id])
-    
-    dailyRate         Int
-    quantity          Int      @default(1)
-    totalPrice        Int
-    
-    createdAt         DateTime @default(now())
-}
-
-// ========================================
-// FINANCE & ACCOUNTING
-// ========================================
-
-model FinancialTransaction {
-    id                String   @id @default(uuid())
-    transactionNumber String   @unique
-    userId            String
-    user              User     @relation(fields: [userId], references: [id])
-    
-    transactionType   FinancialTransactionType
-    amount            Int      // Amount in cents
-    currency          String   @default("IDR")
-    
-    // Reference to related entity
-    referenceType     String?  // Order, PurchaseOrder, RentalOrder, etc.
-    referenceId       String?
-    
-    // Account mapping
-    debitAccount      String?
-    creditAccount     String?
-    
-    description       String
-    transactionDate   DateTime
-    status            FinancialTransactionStatus @default(PENDING)
-    
-    // Payment details
-    paymentMethod     String?
-    externalTransactionId String?
-    
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-}
-
-enum FinancialTransactionType {
-    SALE
-    PURCHASE
-    RENTAL_INCOME
-    MAINTENANCE_EXPENSE
-    SALARY_EXPENSE
-    UTILITY_EXPENSE
-    OTHER_INCOME
-    OTHER_EXPENSE
-}
-
-enum FinancialTransactionStatus {
-    PENDING
-    COMPLETED
-    CANCELLED
-    VOID
-}
-
-model Account {
-    id                String   @id @default(uuid())
-    accountNumber     String   @unique
-    name              String
-    type              AccountType
-    parentAccountId   String?
-    parentAccount     Account? @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
-    childAccounts     Account[] @relation("AccountHierarchy")
-    
-    balance           Int      @default(0)
+    type              String   // Equipment type
+    description       String?
+    currentSiteId     String?  // Current location
+    acquisitionCost   Decimal  @db.Decimal(14,2) // Money field (R8)
+    currentValue      Decimal  @db.Decimal(14,2) // Money field (R8)
     isActive          Boolean  @default(true)
     
-    createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
-}
-
-enum AccountType {
-    ASSET
-    LIABILITY
-    EQUITY
-    REVENUE
-    EXPENSE
-}
-
-// ========================================
-// HRMS & PAYROLL
-// ========================================
-
-model Employee {
-    id                String   @id @default(uuid())
-    employeeNumber    String   @unique
-    userId            String
-    user              User     @relation(fields: [userId], references: [id])
-    
-    // Personal information
-    firstName         String
-    lastName          String
-    email             String   @unique
-    phone             String?
-    address           String?
-    dateOfBirth       DateTime?
-    gender            Gender?
-    maritalStatus     MaritalStatus?
-    
-    // Employment details
-    departmentId      String
-    department        Department @relation(fields: [departmentId], references: [id])
-    position          String
-    hireDate          DateTime
-    terminationDate   DateTime?
-    employmentStatus  EmploymentStatus @default(ACTIVE)
-    
-    // Salary information
-    baseSalary        Int      // Monthly salary in cents
-    allowances        Int      @default(0)
-    taxNumber         String?
-    bankAccount       String?
-    
-    // Emergency contact
-    emergencyContactName String?
-    emergencyContactPhone String?
-    emergencyContactRelation String?
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
     
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
     
     // Relations
-    attendanceRecords AttendanceRecord[]
-    leaveRequests     LeaveRequest[]
-    payrollRecords    PayrollRecord[]
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    usageLogs         UsageLog[]
+    breakdowns        Breakdown[]
+    workOrders        WorkOrder[]
+    
+    @@index([tenantId, code]) // Composite index (R2, R8)
+    @@index([tenantId, isActive, type]) // For equipment queries
 }
 
-enum Gender {
-    MALE
-    FEMALE
-    OTHER
-}
-
-enum MaritalStatus {
-    SINGLE
-    MARRIED
-    DIVORCED
-    WIDOWED
-}
-
-enum EmploymentStatus {
-    ACTIVE
-    INACTIVE
-    TERMINATED
-    ON_LEAVE
-}
-
-model AttendanceRecord {
+model UsageLog {
     id                String   @id @default(uuid())
-    employeeId        String
-    employee          Employee @relation(fields: [employeeId], references: [id])
-    
-    date              DateTime @db.Date
-    checkInTime       DateTime?
-    checkOutTime      DateTime?
-    totalHours        Float?
-    overtimeHours     Float    @default(0)
-    
-    status            AttendanceStatus @default(PRESENT)
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    shiftDate         DateTime
+    hoursUsed         Decimal  @db.Decimal(8,2) // Usage hours
+    loadUnits         Decimal  @db.Decimal(8,2) @default(0) // Load units
+    operatorId        String?  // Operator user ID
     notes             String?
-    
     createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
     
-    @@unique([employeeId, date])
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, shiftDate]) // For equipment usage queries
+    @@index([tenantId, shiftDate]) // For date-based queries
 }
 
-enum AttendanceStatus {
-    PRESENT
-    ABSENT
-    LATE
-    HALF_DAY
-    ON_LEAVE
-    HOLIDAY
-}
-
-model LeaveRequest {
+model Breakdown {
     id                String   @id @default(uuid())
-    employeeId        String
-    employee          Employee @relation(fields: [employeeId], references: [id])
-    
-    leaveType         LeaveType
-    startDate         DateTime
-    endDate           DateTime
-    totalDays         Int
-    reason            String
-    
-    status            LeaveRequestStatus @default(PENDING)
-    approvedBy        String?
-    approvedAt        DateTime?
-    rejectionReason   String?
-    
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    startAt           DateTime
+    endAt             DateTime?
+    reason            String?
+    notes             String?
+    reportedBy        String?  // User who reported
+    resolvedBy        String?  // User who resolved
     createdAt         DateTime @default(now())
-    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, startAt]) // For equipment breakdown queries
+    @@index([tenantId, startAt]) // For date-based breakdown queries
 }
 
-enum LeaveType {
-    ANNUAL_LEAVE
-    SICK_LEAVE
-    PERSONAL_LEAVE
-    MATERNITY_LEAVE
-    PATERNITY_LEAVE
-    UNPAID_LEAVE
-}
-
-enum LeaveRequestStatus {
-    PENDING
-    APPROVED
-    REJECTED
-    CANCELLED
-}
-
-model PayrollRecord {
+model WorkOrder {
     id                String   @id @default(uuid())
-    employeeId        String
-    employee          Employee @relation(fields: [employeeId], references: [id])
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    type              String   // preventive|corrective|emergency
+    status            String   // planned|released|in_progress|completed|canceled
+    scheduledDate     DateTime?
+    estimatedCost     Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    actualCost        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    description       String?
+    assignedTo        String?  // Assigned user ID
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
     
-    payPeriod         String   // e.g., "2024-01" for January 2024
-    baseSalary        Int
-    allowances        Int      @default(0)
-    overtimePay       Int      @default(0)
-    deductions        Int      @default(0)
-    netSalary         Int
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
     
-    paymentDate       DateTime?
-    paymentMethod     String?
-    status            PayrollStatus @default(PENDING)
+    @@index([tenantId, equipmentId, status]) // For equipment work order queries
+    @@index([tenantId, status, scheduledDate]) // For work order scheduling
+}
+
+// ========================================
+// INVENTORY (P1 - Item Master & Transactions)
+// ========================================
+
+model Item {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    number            String   @unique // Item number
+    description       String
+    type              String   // Item type
+    stdCost           Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    lastCost          Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    avgCost           Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    isActive          Boolean  @default(true)
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
     
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
     
-    @@unique([employeeId, payPeriod])
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    branches          ItemBranch[]
+    inventoryTxs      InventoryTx[]
+    purchaseRequestItems PurchaseRequestItem[]
+    purchaseOrderItems PurchaseOrderItem[]
+    
+    @@index([tenantId, number]) // Composite index (R2, R8)
+    @@index([tenantId, isActive, type]) // For item queries
 }
 
-enum PayrollStatus {
-    PENDING
-    PROCESSED
-    PAID
-    CANCELLED
+model ItemBranch {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    itemId            String
+    siteId            String   // Site/warehouse ID
+    reorderPoint      Int      @default(0)
+    reorderQty        Int      @default(0)
+    safetyStock       Int      @default(0)
+    leadTimeDays      Int      @default(0)
+    lotSize           Int      @default(1)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    item              Item     @relation(fields: [itemId], references: [id])
+    locations         ItemLocation[]
+    
+    @@unique([tenantId, itemId, siteId]) // Unique per tenant-item-site
+    @@index([tenantId, siteId]) // For site-based queries
+}
+
+model ItemLocation {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    itemBranchId      String
+    bin               String   // Bin location
+    lotNumber         String?  // Lot number
+    qtyOnHand         Int      @default(0)
+    qtyCommitted      Int      @default(0)
+    qtyOnOrder        Int      @default(0)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    itemBranch        ItemBranch @relation(fields: [itemBranchId], references: [id])
+    
+    @@unique([tenantId, itemBranchId, bin, lotNumber]) // Unique per location
+    @@index([tenantId, itemBranchId]) // For item branch queries
+}
+
+model InventoryTx {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    itemId            String
+    siteId            String   // Site/warehouse ID
+    location          String   // Bin location
+    txType            String   // GRN|GI|ADJ|MOVE
+    qty               Int      // Quantity (positive for in, negative for out)
+    unitCost          Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    refType           String?  // Reference type (PO, SO, etc.)
+    refId             String?  // Reference ID
+    userId            String?  // User who performed the transaction
+    notes             String?
+    createdAt         DateTime @default(now())
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    item              Item     @relation(fields: [itemId], references: [id])
+    
+    @@index([tenantId, itemId, createdAt]) // For item transaction history
+    @@index([tenantId, txType, createdAt]) // For transaction type queries
+    @@index([tenantId, refType, refId]) // For reference queries
 }
 
 // ========================================
@@ -662,6 +386,7 @@ enum PayrollStatus {
 
 model Customer {
     id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
     customerNumber    String   @unique
     name              String
     type              CustomerType @default(INDIVIDUAL)
@@ -689,15 +414,21 @@ model Customer {
     creditLimit       Int      @default(0)
     currentBalance    Int      @default(0)
     
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
     createdBy         String?
     updatedBy         String?
     
     // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
     contacts          CustomerContact[]
     orders            Order[]
-    rentalOrders      RentalOrder[]
+    
+    @@index([tenantId, customerNumber]) // Composite index (R2, R8)
+    @@index([tenantId, status, createdAt]) // For customer queries
 }
 
 enum CustomerType {
@@ -715,6 +446,7 @@ enum CustomerStatus {
 
 model CustomerContact {
     id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
     customerId        String
     customer          Customer @relation(fields: [customerId], references: [id])
     userId            String
@@ -729,6 +461,12 @@ model CustomerContact {
     
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, customerId, contactDate]) // For customer contact queries
+    @@index([tenantId, userId, contactDate]) // For user contact queries
 }
 
 enum ContactType {
@@ -752,6 +490,7 @@ enum ContactStatus {
 
 model Order {
     id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
     orderNumber       String   @unique
     
     // Customer information
@@ -782,6 +521,9 @@ model Order {
     shippingMethod    String?
     shippingCost      Int      @default(0)
     
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
     // Notes and audit
     notes             String?
     createdBy         String
@@ -793,7 +535,12 @@ model Order {
     updatedAt         DateTime @updatedAt
     
     // Relations
-    orderItems        OrderItem[]
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    // orderItems removed - no inventory module
+    
+    @@index([tenantId, orderNumber]) // Composite index (R2, R8)
+    @@index([tenantId, status, orderDate]) // For order queries
+    @@index([tenantId, customerId, orderDate]) // For customer order queries
 }
 
 enum OrderStatus {
@@ -814,20 +561,7 @@ enum PaymentStatus {
     VOID
 }
 
-model OrderItem {
-    id                String   @id @default(uuid())
-    orderId           String
-    order             Order    @relation(fields: [orderId], references: [id])
-    productId         String
-    product           Product  @relation(fields: [productId], references: [id])
-    
-    quantity          Int
-    unitPrice         Int
-    discount          Int      @default(0)
-    totalPrice        Int
-    
-    createdAt         DateTime @default(now())
-}
+// OrderItem model removed - no inventory module
 
 // ========================================
 // OFFLINE SYNC SUPPORT
@@ -835,6 +569,7 @@ model OrderItem {
 
 model SyncLog {
     id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
     entityType        String   // User, Product, Order, etc.
     entityId          String
     action            String   // CREATE, UPDATE, DELETE
@@ -847,6 +582,12 @@ model SyncLog {
     
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, syncStatus, createdAt]) // For sync processing
+    @@index([tenantId, deviceId, createdAt]) // For device sync queries
 }
 
 enum SyncStatus {
@@ -862,9 +603,222 @@ enum SyncStatus {
 
 model Post {
     id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
     name              String
     createdAt         DateTime @default(now())
     
     createdBy         String
     creator           User     @relation(fields: [createdBy], references: [id])
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, createdAt]) // For tenant-scoped post queries
+}
+
+// ========================================
+// NOTIFICATION SYSTEM (P1 - Core Platform)
+// ========================================
+
+model Notification {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    type              String   // 'info', 'warning', 'error', 'success'
+    title             String
+    message           String
+    userId            String?  // null for global notifications
+    data              Json?    // Additional notification data
+    read              Boolean  @default(false)
+    createdAt         DateTime @default(now())
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    user              User?    @relation(fields: [userId], references: [id])
+    
+    @@index([tenantId, userId, read, createdAt]) // For efficient queries
+}
+
+// ========================================
+// SYSTEM CONFIGURATION (P1 - Core Platform)
+// ========================================
+
+model SystemConfig {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    key               String   // Configuration key
+    value             String   // Configuration value (stored as string)
+    type              String   // 'string', 'number', 'boolean', 'json'
+    description       String?  // Configuration description
+    isPublic          Boolean  @default(false) // Whether config is public
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@unique([tenantId, key]) // Unique key per tenant
+    @@index([tenantId, isPublic]) // For efficient queries
+}
+
+// ========================================
+// PURCHASE MANAGEMENT (P1 - Inventory Module)
+// ========================================
+
+model PurchaseRequest {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    prNumber          String   @unique // Purchase Request Number
+    title             String
+    description       String?
+    requestedBy       String   // User ID who requested
+    departmentId      String?  // Department requesting
+    priority          Priority @default(MEDIUM)
+    status            PRStatus @default(DRAFT)
+    requestedDate     DateTime @default(now())
+    requiredDate      DateTime?
+    approvedBy        String?  // User ID who approved
+    approvedDate      DateTime?
+    totalAmount       Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    requester         User     @relation("PurchaseRequestRequester", fields: [requestedBy], references: [id])
+    department        Department? @relation(fields: [departmentId], references: [id])
+    approver          User?    @relation("PurchaseRequestApprover", fields: [approvedBy], references: [id])
+    items             PurchaseRequestItem[]
+    purchaseOrders    PurchaseOrder[]
+    
+    @@index([tenantId, prNumber]) // Composite index (R2, R8)
+    @@index([tenantId, status, createdAt]) // For PR queries
+}
+
+model PurchaseRequestItem {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    prId              String
+    purchaseRequest   PurchaseRequest @relation(fields: [prId], references: [id])
+    itemId            String
+    item              Item     @relation(fields: [itemId], references: [id])
+    
+    quantity          Int
+    unitPrice         Decimal  @db.Decimal(14,2) @default(0)
+    totalPrice        Decimal  @db.Decimal(14,2) @default(0)
+    description       String?
+    specifications    String?
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, prId]) // For PR item queries
+    @@index([tenantId, itemId]) // For item queries
+}
+
+model PurchaseOrder {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    poNumber          String   @unique // Purchase Order Number
+    prId              String?  // Reference to Purchase Request
+    purchaseRequest   PurchaseRequest? @relation(fields: [prId], references: [id])
+    
+    supplierId        String?  // Supplier ID (if we have supplier model)
+    supplierName      String?  // Supplier name
+    supplierAddress   String?  // Supplier address
+    
+    status            POStatus @default(DRAFT)
+    orderDate         DateTime @default(now())
+    expectedDate      DateTime?
+    receivedDate      DateTime?
+    
+    subtotal          Decimal  @db.Decimal(14,2) @default(0)
+    taxAmount         Decimal  @db.Decimal(14,2) @default(0)
+    totalAmount       Decimal  @db.Decimal(14,2) @default(0)
+    
+    notes             String?
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    creator           User?    @relation("PurchaseOrderCreator", fields: [createdBy], references: [id])
+    updater           User?    @relation("PurchaseOrderUpdater", fields: [updatedBy], references: [id])
+    items             PurchaseOrderItem[]
+    
+    @@index([tenantId, poNumber]) // Composite index (R2, R8)
+    @@index([tenantId, status, createdAt]) // For PO queries
+}
+
+model PurchaseOrderItem {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    poId              String
+    purchaseOrder     PurchaseOrder @relation(fields: [poId], references: [id])
+    itemId            String
+    item              Item     @relation(fields: [itemId], references: [id])
+    
+    quantity          Int
+    unitPrice         Decimal  @db.Decimal(14,2) @default(0)
+    totalPrice        Decimal  @db.Decimal(14,2) @default(0)
+    receivedQuantity  Int      @default(0)
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, poId]) // For PO item queries
+    @@index([tenantId, itemId]) // For item queries
+}
+
+// ========================================
+// ENUMS FOR PURCHASE MANAGEMENT
+// ========================================
+
+enum Priority {
+    LOW
+    MEDIUM
+    HIGH
+    URGENT
+}
+
+enum PRStatus {
+    DRAFT
+    SUBMITTED
+    APPROVED
+    REJECTED
+    CANCELLED
+    CONVERTED_TO_PO
+}
+
+enum POStatus {
+    DRAFT
+    SENT
+    ACKNOWLEDGED
+    PARTIALLY_RECEIVED
+    RECEIVED
+    CANCELLED
+    CLOSED
 }
