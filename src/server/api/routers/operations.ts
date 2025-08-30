@@ -1,4 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import { z } from 'zod';
 import { router, protectedProcedure, idempotentProcedure } from '../config/trpc';
 import { TRPCError } from '@trpc/server';
@@ -15,20 +20,30 @@ export const operationsRouter = router({
       limit: z.number().min(1).max(100).default(50),
       type: z.string().optional(),
       siteId: z.string().optional(),
+      search: z.string().optional(), // FP6: server-side search
     }))
     .query(async ({ ctx, input }) => {
-      const { cursor, limit, type, siteId } = input;
+      const { cursor, limit, type, siteId, search } = input;
       
+      // R2: tenant-scoped query with proper indexing
       const equipment = await ctx.prisma.equipment.findMany({
         where: {
-          tenantId: ctx.tenantId,
+          tenantId: ctx.tenantId, // R2: left-most index starts with tenant_id
           isActive: true,
           ...(type && { type }),
           ...(siteId && { currentSiteId: siteId }),
+          // FP6: server-side search (avoid client-side filtering)
+          ...(search && {
+            OR: [
+              { code: { contains: search, mode: 'insensitive' } },
+              { type: { contains: search, mode: 'insensitive' } },
+              { description: { contains: search, mode: 'insensitive' } },
+            ],
+          }),
         },
         take: limit + 1,
         cursor: cursor ? { id: cursor } : undefined,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'desc' }, // R1: tie-break by id (createdAt for now)
       });
       
       let nextCursor: typeof cursor | undefined = undefined;
@@ -462,6 +477,162 @@ export const operationsRouter = router({
         totalDowntime: Math.round(downtime * 100) / 100,
       };
     }),
+
+  // Additional procedures for new components
+  updateEquipment: idempotentProcedure
+    .input(z.object({
+      id: z.string(),
+      code: z.string().min(1),
+      type: z.string().min(1),
+      description: z.string().optional(),
+      currentSiteId: z.string().optional(),
+      acquisitionCost: z.number().min(0),
+      currentValue: z.number().min(0),
+      idempotencyKey: z.string().uuid(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { idempotencyKey, id, ...data } = input;
+      
+      const equipment = await ctx.prisma.equipment.update({
+        where: {
+          id,
+          tenantId: ctx.tenantId,
+        },
+        data: {
+          ...data,
+          version: { increment: 1 },
+        },
+      });
+      
+      return equipment;
+    }),
+
+  deleteEquipment: idempotentProcedure
+    .input(z.object({
+      id: z.string(),
+      idempotencyKey: z.string().uuid(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { idempotencyKey, id } = input;
+      
+      const equipment = await ctx.prisma.equipment.update({
+        where: {
+          id,
+          tenantId: ctx.tenantId,
+        },
+        data: {
+          isActive: false,
+          version: { increment: 1 },
+        },
+      });
+      
+      return equipment;
+    }),
+
+  getUsageLogs: protectedProcedure
+    .input(z.object({
+      from: z.string().datetime(),
+      to: z.string().datetime(),
+      equipmentId: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { from, to, equipmentId } = input;
+      
+      const usageLogs = await ctx.prisma.usageLog.findMany({
+        where: {
+          tenantId: ctx.tenantId,
+          ...(equipmentId && { equipmentId }),
+          shiftDate: {
+            gte: new Date(from),
+            lte: new Date(to),
+          },
+        },
+        include: {
+          equipment: true,
+        },
+        orderBy: { shiftDate: 'desc' },
+      });
+      
+      return usageLogs;
+    }),
+
+  getBreakdowns: protectedProcedure
+    .input(z.object({
+      from: z.string().datetime(),
+      to: z.string().datetime(),
+      equipmentId: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { from, to, equipmentId } = input;
+      
+      const breakdowns = await ctx.prisma.breakdown.findMany({
+        where: {
+          tenantId: ctx.tenantId,
+          ...(equipmentId && { equipmentId }),
+          startAt: {
+            gte: new Date(from),
+            lte: new Date(to),
+          },
+        },
+        include: {
+          equipment: true,
+        },
+        orderBy: { startAt: 'desc' },
+      });
+      
+      return breakdowns;
+    }),
+
+  createBreakdown: idempotentProcedure
+    .input(z.object({
+      equipmentId: z.string(),
+      startAt: z.string().datetime(),
+      endAt: z.string().datetime().optional(),
+      reason: z.string().optional(),
+      notes: z.string().optional(),
+      reportedBy: z.string().optional(),
+      idempotencyKey: z.string().uuid(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { idempotencyKey, ...data } = input;
+      
+      const breakdown = await ctx.prisma.breakdown.create({
+        data: {
+          ...data,
+          tenantId: ctx.tenantId,
+          reportedBy: data.reportedBy || ctx.userId,
+        },
+      });
+      
+      return breakdown;
+    }),
+
+  updateBreakdown: idempotentProcedure
+    .input(z.object({
+      id: z.string(),
+      equipmentId: z.string(),
+      startAt: z.string().datetime(),
+      endAt: z.string().datetime().optional(),
+      reason: z.string().optional(),
+      notes: z.string().optional(),
+      reportedBy: z.string().optional(),
+      idempotencyKey: z.string().uuid(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { idempotencyKey, id, ...data } = input;
+      
+      const breakdown = await ctx.prisma.breakdown.update({
+        where: {
+          id,
+          tenantId: ctx.tenantId,
+        },
+        data,
+      });
+      
+      return breakdown;
+    }),
+
+
 });
 
 

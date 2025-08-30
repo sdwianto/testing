@@ -6,6 +6,7 @@ import { coreRouter } from './routers/core';
 import { purchaseRouter } from './routers/purchase';
 import { kpiRouter } from './routers/kpi';
 import { workflowRouter } from './routers/workflow';
+import { rentalRouter } from './routers/rental';
 
 // ========================================
 // MAIN tRPC ROUTER (P1 - Core Platform)
@@ -18,6 +19,7 @@ export const appRouter = router({
   purchase: purchaseRouter,
   kpi: kpiRouter,
   workflow: workflowRouter,
+  rental: rentalRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -35,6 +35,9 @@ model Tenant {
     usageLogs         UsageLog[]
     breakdowns        Breakdown[]
     workOrders        WorkOrder[]
+    equipmentRentals  EquipmentRental[]
+    rentalBills       RentalBill[]
+    rentalUsage       RentalUsage[]
     items             Item[]
     itemBranches      ItemBranch[]
     itemLocations     ItemLocation[]
@@ -216,6 +219,7 @@ model Equipment {
     usageLogs         UsageLog[]
     breakdowns        Breakdown[]
     workOrders        WorkOrder[]
+    equipmentRentals  EquipmentRental[]
     
     @@index([tenantId, code]) // Composite index (R2, R8)
     @@index([tenantId, isActive, type]) // For equipment queries
@@ -280,6 +284,161 @@ model WorkOrder {
     
     @@index([tenantId, equipmentId, status]) // For equipment work order queries
     @@index([tenantId, status, scheduledDate]) // For work order scheduling
+}
+
+// ========================================
+// EQUIPMENT RENTAL MANAGEMENT (JDE F4201-style)
+// ========================================
+
+model EquipmentRental {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    rentalNumber      String   @unique // Rental contract number
+    equipmentId       String
+    customerId        String   // Customer renting the equipment
+    
+    // Rental period
+    startDate         DateTime
+    endDate           DateTime?
+    actualEndDate     DateTime? // When equipment was actually returned
+    
+    // Pricing structure
+    hourlyRate        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    dailyRate         Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    weeklyRate        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    monthlyRate       Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    
+    // Usage tracking
+    hoursUsed         Decimal  @db.Decimal(8,2) @default(0) // Total hours used
+    daysUsed          Int      @default(0) // Total days used
+    
+    // Billing
+    totalAmount       Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    amountPaid        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    balanceDue        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    
+    // Status and workflow
+    status            RentalStatus @default(ACTIVE)
+    billingStatus     BillingStatus @default(PENDING)
+    
+    // Location tracking
+    pickupLocation    String?  // Where equipment was picked up
+    returnLocation    String?  // Where equipment should be returned
+    currentLocation   String?  // Current location of equipment
+    
+    // Contract details
+    contractTerms     String?  // Special terms and conditions
+    insuranceRequired Boolean  @default(false)
+    insuranceAmount   Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?  // User who created the rental
+    updatedBy         String?  // User who last updated
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    customer          Customer @relation(fields: [customerId], references: [id])
+    rentalBills       RentalBill[]
+    rentalUsage       RentalUsage[]
+    
+    @@index([tenantId, rentalNumber]) // Composite index (R2, R8)
+    @@index([tenantId, equipmentId, status]) // For equipment rental queries
+    @@index([tenantId, customerId, status]) // For customer rental queries
+    @@index([tenantId, status, startDate]) // For rental status queries
+}
+
+model RentalBill {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    rentalId          String
+    billNumber        String   @unique // Bill number
+    billDate          DateTime @default(now())
+    dueDate           DateTime
+    
+    // Billing period
+    periodStart       DateTime
+    periodEnd         DateTime
+    
+    // Amounts
+    baseAmount        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    usageAmount       Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    additionalCharges Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    totalAmount       Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    
+    // Payment tracking
+    amountPaid        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    balanceDue        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
+    
+    // Status
+    status            BillStatus @default(PENDING)
+    paidDate          DateTime?
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    rental            EquipmentRental @relation(fields: [rentalId], references: [id])
+    
+    @@index([tenantId, rentalId, billDate]) // For rental billing queries
+    @@index([tenantId, status, dueDate]) // For billing status queries
+}
+
+model RentalUsage {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    rentalId          String
+    usageDate         DateTime
+    hoursUsed         Decimal  @db.Decimal(8,2) @default(0) // Hours used on this date
+    loadUnits         Decimal  @db.Decimal(8,2) @default(0) // Load units on this date
+    operatorId        String?  // Operator user ID
+    location          String?  // Location where equipment was used
+    notes             String?  // Usage notes
+    
+    createdAt         DateTime @default(now())
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    rental            EquipmentRental @relation(fields: [rentalId], references: [id])
+    
+    @@index([tenantId, rentalId, usageDate]) // For rental usage queries
+    @@index([tenantId, usageDate]) // For date-based usage queries
+}
+
+// ========================================
+// RENTAL MANAGEMENT ENUMS
+// ========================================
+
+enum RentalStatus {
+    ACTIVE
+    COMPLETED
+    CANCELLED
+    SUSPENDED
+    OVERDUE
+}
+
+enum BillingStatus {
+    PENDING
+    BILLED
+    PAID
+    OVERDUE
+    CANCELLED
+}
+
+enum BillStatus {
+    PENDING
+    SENT
+    PAID
+    OVERDUE
+    CANCELLED
 }
 
 // ========================================
@@ -426,6 +585,7 @@ model Customer {
     tenant            Tenant   @relation(fields: [tenantId], references: [id])
     contacts          CustomerContact[]
     orders            Order[]
+    equipmentRentals  EquipmentRental[]
     
     @@index([tenantId, customerNumber]) // Composite index (R2, R8)
     @@index([tenantId, status, createdAt]) // For customer queries

@@ -5,7 +5,9 @@ import {
   Settings,
   Activity,
   Cloud,
-  Wifi
+  Wifi,
+  Wrench,
+  Package
 } from "lucide-react";
 import React, { type ReactNode } from "react";
 
@@ -279,6 +281,42 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <Link href="/crm">
                     <Building2 className="mr-2 h-4 w-4" />
                     CRM
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
+            <SidebarSeparator className="my-2" />
+
+            {/* Operations Management */}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Operations Management"
+                  isActive={isActive("/operations")}
+                >
+                  <Link href="/operations">
+                    <Wrench className="mr-2 h-4 w-4" />
+                    Operations
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
+            <SidebarSeparator className="my-2" />
+
+            {/* Inventory Management */}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Inventory Management"
+                  isActive={isActive("/inventory")}
+                >
+                  <Link href="/inventory">
+                    <Package className="mr-2 h-4 w-4" />
+                    Inventory
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

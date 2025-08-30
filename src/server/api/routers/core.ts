@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { z } from 'zod';
 import { router, protectedProcedure, rbacProcedure } from '../config/trpc';
 import { NotificationService } from '../services/notificationService';
@@ -377,4 +380,35 @@ export const coreRouter = router({
         );
       }),
   }),
+
+  // Additional procedures for new components
+  getSites: protectedProcedure
+    .query(async ({ ctx }) => {
+      // Mock sites data - in real implementation, this would come from database
+      return [
+        { id: 'site-1', name: 'Main Site' },
+        { id: 'site-2', name: 'Secondary Site' },
+        { id: 'site-3', name: 'Remote Site' },
+      ];
+    }),
+
+  getUsers: protectedProcedure
+    .input(z.object({
+      role: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Mock users data - in real implementation, this would come from database
+      const users = [
+        { id: 'user-1', name: 'John Doe', role: 'OPERATOR' },
+        { id: 'user-2', name: 'Jane Smith', role: 'MANAGER' },
+        { id: 'user-3', name: 'Bob Johnson', role: 'OPERATOR' },
+        { id: 'user-4', name: 'Alice Brown', role: 'ADMIN' },
+      ];
+
+      if (input.role) {
+        return users.filter(user => user.role === input.role);
+      }
+
+      return users;
+    }),
 });
