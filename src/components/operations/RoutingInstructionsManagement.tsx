@@ -155,8 +155,8 @@ export function RoutingInstructionsManagement() {
   };
 
   const allInstructions = useMemo(() => {
-    return routingInstructions?.routingInstructions || [] as any[];
-  }, [routingInstructions]);
+    return routingInstructions?.routingInstructions || [];
+  }, [routingInstructions]) as any[];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

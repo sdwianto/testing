@@ -166,8 +166,8 @@ export function BudgetImpactAnalysisManagement() {
   };
 
   const allAnalysis = useMemo(() => {
-    return budgetImpactAnalysis?.budgetImpactAnalysis || [] as any[];
-  }, [budgetImpactAnalysis]);
+    return budgetImpactAnalysis?.budgetImpactAnalysis || [];
+  }, [budgetImpactAnalysis]) as any[];
 
   const getImpactBadge = (impactType: string) => {
     switch (impactType) {

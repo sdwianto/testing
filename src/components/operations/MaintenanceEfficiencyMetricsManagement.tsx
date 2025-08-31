@@ -157,8 +157,8 @@ export function MaintenanceEfficiencyMetricsManagement() {
   };
 
   const allMetrics = useMemo(() => {
-    return maintenanceEfficiency?.maintenanceEfficiency || [] as any[];
-  }, [maintenanceEfficiency]);
+    return maintenanceEfficiency?.maintenanceEfficiency || [];
+  }, [maintenanceEfficiency]) as any[];
 
   const getTypeBadge = (type: string) => {
     switch (type) {

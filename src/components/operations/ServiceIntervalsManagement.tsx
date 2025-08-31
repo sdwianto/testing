@@ -162,8 +162,8 @@ export function ServiceIntervalsManagement() {
   };
 
   const allIntervals = useMemo(() => {
-    return serviceIntervals?.serviceIntervals || [] as any[];
-  }, [serviceIntervals]);
+    return serviceIntervals?.serviceIntervals || [];
+  }, [serviceIntervals]) as any[];
 
   const getUnitBadge = (unit: string) => {
     switch (unit) {

@@ -152,8 +152,8 @@ export function MaintenanceStatusHistoryManagement() {
   };
 
   const allHistory = useMemo(() => {
-    return maintenanceStatusHistory?.maintenanceStatusHistory || [] as any[];
-  }, [maintenanceStatusHistory]);
+    return maintenanceStatusHistory?.maintenanceStatusHistory || [];
+  }, [maintenanceStatusHistory]) as any[];
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {

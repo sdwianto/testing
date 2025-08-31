@@ -156,8 +156,8 @@ export function WorkOrderProgressManagement() {
   };
 
   const allProgress = useMemo(() => {
-    return workOrderProgress?.workOrderProgress || [] as any[];
-  }, [workOrderProgress]);
+    return workOrderProgress?.workOrderProgress || [];
+  }, [workOrderProgress]) as any[];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

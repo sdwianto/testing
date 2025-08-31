@@ -165,8 +165,8 @@ export function PredictiveMaintenanceAnalyticsManagement() {
   };
 
   const allPredictions = useMemo(() => {
-    return predictiveMaintenance?.predictiveMaintenance || [] as any[];
-  }, [predictiveMaintenance]);
+    return predictiveMaintenance?.predictiveMaintenance || [];
+  }, [predictiveMaintenance]) as any[];
 
   const getTypeBadge = (type: string) => {
     switch (type) {

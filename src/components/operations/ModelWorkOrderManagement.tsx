@@ -172,8 +172,8 @@ export function ModelWorkOrderManagement() {
   };
 
   const allModels = useMemo(() => {
-    return modelWorkOrders?.modelWorkOrders || [] as any[];
-  }, [modelWorkOrders]);
+    return modelWorkOrders?.modelWorkOrders || [];
+  }, [modelWorkOrders]) as any[];
 
   const getTypeBadge = (type: string) => {
     switch (type) {

@@ -152,8 +152,8 @@ export function WorkOrderApprovalManagement() {
   };
 
   const allApprovals = useMemo(() => {
-    return workOrderApprovals?.workOrderApprovals || [] as any[];
-  }, [workOrderApprovals]);
+    return workOrderApprovals?.workOrderApprovals || [];
+  }, [workOrderApprovals]) as any[];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

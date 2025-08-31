@@ -165,7 +165,7 @@ export function QualityInspectionManagement({ onSuccess }: QualityInspectionMana
   const allInspections = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return qualityInspections?.qualityInspections || [] as any[];
-  }, [qualityInspections]);
+  }, [qualityInspections]) as any[];
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
