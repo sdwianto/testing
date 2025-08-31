@@ -8,9 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { 
-  BarChart3, Package, Settings, FileText, 
-  RotateCcw, TrendingUp, Activity, Users,
-  Wrench, Clock, AlertTriangle, Plus
+  BarChart3, Package, Wrench, Clock, AlertTriangle, Plus
 } from 'lucide-react';
 
 // ========================================

@@ -3,7 +3,7 @@
 import { ModernOperationsDashboard } from '@/components/operations/ModernOperationsDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  BarChart3, PieChart, TrendingUp, Activity,
+  BarChart3, PieChart, TrendingUp,
   Package, Settings, FileText, RotateCcw
 } from 'lucide-react';
 

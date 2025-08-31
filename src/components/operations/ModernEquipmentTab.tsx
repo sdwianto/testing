@@ -8,7 +8,7 @@ import { ModernEquipmentLifecycleManagement } from '@/components/operations/Mode
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Package, FileText, Settings, BarChart3, 
-  RotateCcw, Wrench, Calendar, Activity
+  RotateCcw, Wrench
 } from 'lucide-react';
 
 // ========================================

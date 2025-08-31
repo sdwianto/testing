@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-floating-promises */
+
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -277,7 +277,7 @@ export function ModernWorkOrderManagement({ onSuccess }: ModernWorkOrderManageme
             <FileText className="h-4 w-4 text-blue-600" />
           </div>
           <div>
-            <div className="font-medium dark:text-white">{value}</div>
+            <div className="font-medium dark:text-white">{value as string}</div>
             <div className="text-sm text-muted-foreground">{row.title}</div>
           </div>
         </div>
@@ -298,25 +298,25 @@ export function ModernWorkOrderManagement({ onSuccess }: ModernWorkOrderManageme
       key: 'workOrderType',
       label: 'Type',
       sortable: true,
-      render: (value) => getTypeBadge(value)
+      render: (value) => getTypeBadge(value as string)
     },
     {
       key: 'priority',
       label: 'Priority',
       sortable: true,
-      render: (value) => getPriorityBadge(value)
+      render: (value) => getPriorityBadge(value as string)
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (value) => getStatusBadge(value)
+      render: (value) => getStatusBadge(value as string)    
     },
     {
       key: 'scheduledDate',
       label: 'Scheduled',
       sortable: true,
-      render: (value) => value ? format(new Date(value), 'MMM dd, yyyy') : '-'
+      render: (value) => value ? format(new Date(value as string), 'MMM dd, yyyy') : '-'
     },
     {
       key: 'estimatedCost',
@@ -502,10 +502,10 @@ export function ModernWorkOrderManagement({ onSuccess }: ModernWorkOrderManageme
                 </div>
                 <div className="space-y-4">
                   {Object.entries(
-                    allWorkOrders.reduce((acc: any, wo: any) => {
+                    allWorkOrders.reduce((acc: Record<string, number>, wo: any) => {
                       acc[wo.workOrderType] = (acc[wo.workOrderType] || 0) + 1;
                       return acc;
-                    }, {}) as any
+                    }, {} as Record<string, number>)
                   ).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -517,7 +517,7 @@ export function ModernWorkOrderManagement({ onSuccess }: ModernWorkOrderManageme
                         }`}></div>
                         <span className="text-sm font-medium dark:text-white">{type}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{count as number}</span>
+                      <span className="text-sm text-muted-foreground">{count}</span>
                     </div>
                   ))}
                 </div>

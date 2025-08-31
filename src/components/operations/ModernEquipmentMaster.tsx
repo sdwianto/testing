@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-floating-promises */
+
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -19,16 +19,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ModernCard, ModernCardContent, ModernCardDescription, ModernCardHeader, ModernCardTitle } from '@/components/ui/modern-card';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { DataTable, Column } from '@/components/ui/data-table';
+import { DataTable, type Column } from '@/components/ui/data-table';
 import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
 import { 
-  Plus, Edit, Trash2, Search, Eye, 
+  Plus, Edit, Trash2, Eye, 
   Wrench, TrendingUp, Settings, Activity, 
-  AlertTriangle, CheckCircle, Package, 
-  Calendar, Clock, DollarSign, MapPin,
-  Filter, Download, MoreHorizontal
+  CheckCircle, Package, 
+  Calendar, Clock, DollarSign, MapPin
 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -230,7 +229,7 @@ export function ModernEquipmentMaster({ onSuccess }: ModernEquipmentMasterProps)
             <Package className="h-4 w-4 text-blue-600" />
           </div>
           <div>
-            <div className="font-medium dark:text-white">{value}</div>
+            <div className="font-medium dark:text-white">{value as string}</div>
             <div className="text-sm text-muted-foreground">{row.name}</div>
           </div>
         </div>
@@ -242,7 +241,7 @@ export function ModernEquipmentMaster({ onSuccess }: ModernEquipmentMasterProps)
       sortable: true,
       render: (value) => (
         <Badge variant="outline" className="text-xs">
-          {value}
+          {value as string}
         </Badge>
       )
     },
@@ -261,7 +260,7 @@ export function ModernEquipmentMaster({ onSuccess }: ModernEquipmentMasterProps)
         
         return (
           <Badge variant={config.variant} className={config.color}>
-            {value}
+            {value as string}
           </Badge>
         );
       }
@@ -280,7 +279,7 @@ export function ModernEquipmentMaster({ onSuccess }: ModernEquipmentMasterProps)
       key: 'yearOfManufacture',
       label: 'Year',
       sortable: true,
-      render: (value) => value || '-'
+      render: (value) => (value as string) || '-'
     },
     {
       key: 'actions',
@@ -466,17 +465,17 @@ export function ModernEquipmentMaster({ onSuccess }: ModernEquipmentMasterProps)
                 </div>
                 <div className="space-y-4">
                   {Object.entries(
-                    allEquipment.reduce((acc: any, eq: any) => {
+                    allEquipment.reduce((acc: Record<string, number>, eq: any) => {
                       acc[eq.type] = (acc[eq.type] || 0) + 1;
                       return acc;
-                    }, {}) as any
+                    }, {} as Record<string, number>)
                   ).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="h-3 w-3 rounded-full bg-blue-500"></div>
                         <span className="text-sm font-medium dark:text-white">{type}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{count as number}</span>
+                      <span className="text-sm text-muted-foreground">{count}</span>
                     </div>
                   ))}
                 </div>

@@ -263,3 +263,11 @@
     font-size: 13px; /* extra reduction for very small screens */
   }
 }
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(1px)) {
+  .header-fallback {
+    background-color: rgba(10,10,10,0.85);
+  }
+}
+

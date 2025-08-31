@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-floating-promises */
+
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -16,15 +16,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ModernCard, ModernCardContent, ModernCardDescription, ModernCardHeader, ModernCardTitle } from '@/components/ui/modern-card';
+
 import { Card, CardContent } from '@/components/ui/card';
-import { DataTable, Column } from '@/components/ui/data-table';
+import { DataTable, type Column } from '@/components/ui/data-table';
 import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
 import { 
-  Plus, Edit, Trash2, Search, Eye, 
+  Plus, Edit, Trash2, Eye, 
   Wrench, Calendar, Clock, AlertTriangle, 
-  CheckCircle, Settings, Activity, TrendingUp,
-  Package, DollarSign, BarChart3, PieChart
+  CheckCircle, Settings, TrendingUp,
+  Package, DollarSign
 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -199,8 +199,9 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
 
   // Get schedules data
   const allSchedules = useMemo(() => {
-    return maintenanceSchedules?.schedules || [];
-  }, [maintenanceSchedules]) as any[];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return (maintenanceSchedules?.schedules || []) as any[];
+  }, [maintenanceSchedules]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -262,7 +263,7 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
             <Calendar className="h-4 w-4 text-blue-600" />
           </div>
           <div>
-            <div className="font-medium dark:text-white">{value}</div>
+            <div className="font-medium dark:text-white">{value as string}</div>
             <div className="text-sm text-muted-foreground">{row.equipment?.code}</div>
           </div>
         </div>
@@ -272,13 +273,13 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
       key: 'maintenanceType',
       label: 'Type',
       sortable: true,
-      render: (value) => getTypeBadge(value)
+      render: (value) => getTypeBadge(value as string)
     },
     {
       key: 'frequencyType',
       label: 'Frequency',
       sortable: true,
-      render: (value, row) => getFrequencyText(value, row.frequencyValue)
+      render: (value, row) => getFrequencyText(value as string, row.frequencyValue)
     },
     {
       key: 'nextMaintenanceDate',
@@ -286,11 +287,11 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
       sortable: true,
       render: (value) => (
         <div className="flex items-center space-x-2">
-          <span>{format(new Date(value), 'MMM dd, yyyy')}</span>
-          {isOverdue(value) && (
+          <span>{format(new Date(value as string), 'MMM dd, yyyy')}</span>
+          {isOverdue(value as string) && (
             <Badge variant="destructive" className="text-xs">Overdue</Badge>
           )}
-          {isDueSoon(value) && !isOverdue(value) && (
+          {isDueSoon(value as string) && !isOverdue(value as string) && (
             <Badge variant="default" className="text-xs bg-orange-600">Due Soon</Badge>
           )}
         </div>
@@ -521,10 +522,10 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
                 </div>
                 <div className="space-y-4">
                   {Object.entries(
-                    allSchedules.reduce((acc: any, schedule: any) => {
+                    allSchedules.reduce((acc: Record<string, number>, schedule: any) => {
                       acc[schedule.maintenanceType] = (acc[schedule.maintenanceType] || 0) + 1;
                       return acc;
-                    }, {}) as any
+                    }, {} as Record<string, number>)
                   ).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -535,7 +536,7 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
                         }`}></div>
                         <span className="text-sm font-medium dark:text-white">{type.replace('_', ' ')}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{count as number}</span>
+                      <span className="text-sm text-muted-foreground">{count}</span>
                     </div>
                   ))}
                 </div>
@@ -606,7 +607,7 @@ export function ModernMaintenanceManagement({ onSuccess }: ModernMaintenanceMana
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Completion Rate</span>
                     <span className="font-semibold">
-                      {maintenanceMetrics?.totalWorkOrders > 0 
+                      {maintenanceMetrics?.totalWorkOrders && maintenanceMetrics.totalWorkOrders > 0 
                         ? Math.round((maintenanceMetrics.completedWorkOrders / maintenanceMetrics.totalWorkOrders) * 100)
                         : 0}%
                     </span>

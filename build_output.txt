@@ -1,0 +1,305 @@
+
+> nextgen-erp@1.0.0 build
+> next build
+
+   ▲ Next.js 15.5.2
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 4.2s
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./src/app/api/auth/[...nextauth]/route.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+
+./src/app/api/events/route.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unnecessary-type-assertion').
+
+./src/app/api/health/route.ts
+15:12  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/offline-packs/inventory/route.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unnecessary-type-assertion').
+19:23  Warning: 'siteId' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/api/offline-packs/job-cards/route.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unnecessary-type-assertion').
+
+./src/app/api/offline-packs/maintenance/route.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unnecessary-type-assertion').
+
+./src/app/api/sync/mutate/route.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unnecessary-type-assertion').
+192:51  Warning: 'baseVersion' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/auth/signin/page.tsx
+40:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/inventory/page.tsx
+5:29  Warning: 'CardHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+5:41  Warning: 'CardTitle' is defined but never used.  @typescript-eslint/no-unused-vars
+7:10  Warning: 'Badge' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/operations/page.tsx
+3:10  Warning: 'useState' is defined but never used.  @typescript-eslint/no-unused-vars
+9:7  Warning: 'ModernOperationsPageLazy' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/DashboardRealTime.tsx
+6:3  Warning: 'WifiOff' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/core/GlobalSearch.tsx
+22:17  Warning: 'session' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+74:6  Warning: React Hook useEffect has a missing dependency: 'handleResultClick'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/core/NotificationCenter.tsx
+4:20  Warning: 'useEffect' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/dashboard/KPICard.tsx
+2:10  Warning: 'Badge' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/dashboard/OperationsDashboard.tsx
+10:10  Warning: 'Calendar' is defined but never used.  @typescript-eslint/no-unused-vars
+14:21  Warning: 'setDateRange' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/inventory/GIForm.tsx
+3:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any', '@typescript-eslint/no-unsafe-assignment', '@typescript-eslint/no-unsafe-call', '@typescript-eslint/no-unsafe-member-access', '@typescript-eslint/no-unsafe-argument', or '@typescript-eslint/no-unsafe-return').
+
+./src/components/inventory/GRNForm.tsx
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any' or '@typescript-eslint/no-unsafe-assignment').
+
+./src/components/inventory/InventoryDashboard.tsx
+7:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+35:38  Warning: 'onSuccess' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+36:21  Warning: 'setDateRange' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/inventory/ItemMaster.tsx
+7:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-call').
+8:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+23:38  Warning: 'Package' is defined but never used.  @typescript-eslint/no-unused-vars
+23:47  Warning: 'AlertTriangle' is defined but never used.  @typescript-eslint/no-unused-vars
+54:68  Warning: 'watch' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/inventory/PurchaseOrderForm.tsx
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any', '@typescript-eslint/no-unsafe-assignment', '@typescript-eslint/no-unsafe-member-access', '@typescript-eslint/no-unsafe-argument', '@typescript-eslint/no-unsafe-call', or '@typescript-eslint/no-unsafe-return').
+14:20  Warning: 'Plus' is defined but never used.  @typescript-eslint/no-unused-vars
+14:26  Warning: 'Trash2' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/inventory/StockManagement.tsx
+6:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+13:10  Warning: 'Label' is defined but never used.  @typescript-eslint/no-unused-vars
+29:35  Warning: 'onSuccess' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/layouts/DashboardLayout.tsx
+32:30  Warning: 'AlertCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+95:10  Warning: 'lastSync' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+105:15  Warning: 'response' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+113:16  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+233:9  Warning: 'formatLastSync' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/layouts/ResponsiveShell.tsx
+22:17  Warning: 'session' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/offline/ConflictResolution.tsx
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-call').
+4:20  Warning: 'useEffect' is defined but never used.  @typescript-eslint/no-unused-vars
+9:10  Warning: 'Separator' is defined but never used.  @typescript-eslint/no-unused-vars
+59:3  Warning: 'onDismiss' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+63:10  Warning: 'mergeData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/offline/OfflineStatus.tsx
+34:5  Warning: 'clearQueue' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/offline/SimpleOfflineIndicator.tsx
+5:10  Warning: 'Wifi' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/operations/ModernDashboardTab.tsx
+7:3  Warning: 'Package' is defined but never used.  @typescript-eslint/no-unused-vars
+7:22  Warning: 'FileText' is defined but never used.  @typescript-eslint/no-unused-vars
+7:32  Warning: 'RotateCcw' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/operations/ModernEquipmentLifecycleManagement.tsx
+26:12  Warning: 'Calendar' is defined but never used.  @typescript-eslint/no-unused-vars
+26:22  Warning: 'Clock' is defined but never used.  @typescript-eslint/no-unused-vars
+27:3  Warning: 'CheckCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+28:15  Warning: 'MapPin' is defined but never used.  @typescript-eslint/no-unused-vars
+28:23  Warning: 'User' is defined but never used.  @typescript-eslint/no-unused-vars
+28:29  Warning: 'FileText' is defined but never used.  @typescript-eslint/no-unused-vars
+58:22  Warning: 'setSearchTerm' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+59:27  Warning: 'setEventTypeFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+60:27  Warning: 'setEquipmentFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+182:5  Error: Unsafe return of a value of type `any[]`.  @typescript-eslint/no-unsafe-return
+512:72  Error: This assertion is unnecessary since it does not change the type of the expression.  @typescript-eslint/no-unnecessary-type-assertion
+
+./src/components/operations/ModernEquipmentMaster.tsx
+28:23  Warning: 'Settings' is defined but never used.  @typescript-eslint/no-unused-vars
+30:3  Warning: 'Calendar' is defined but never used.  @typescript-eslint/no-unused-vars
+30:32  Warning: 'MapPin' is defined but never used.  @typescript-eslint/no-unused-vars
+34:10  Warning: 'format' is defined but never used.  @typescript-eslint/no-unused-vars
+69:22  Warning: 'setSearchTerm' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+70:22  Warning: 'setTypeFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+71:10  Warning: 'statusFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+71:24  Warning: 'setStatusFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/operations/ModernEquipmentTab.tsx
+11:14  Warning: 'Wrench' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/operations/ModernMaintenanceManagement.tsx
+27:3  Warning: 'Package' is defined but never used.  @typescript-eslint/no-unused-vars
+56:22  Warning: 'setSearchTerm' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+57:22  Warning: 'setTypeFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+58:27  Warning: 'setEquipmentFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+202:5  Error: Unsafe return of a value of type `any[]`.  @typescript-eslint/no-unsafe-return
+538:72  Error: This assertion is unnecessary since it does not change the type of the expression.  @typescript-eslint/no-unnecessary-type-assertion
+
+./src/components/operations/ModernPerformanceAnalytics.tsx
+19:24  Warning: 'AlertTriangle' is defined but never used.  @typescript-eslint/no-unused-vars
+33:46  Warning: 'onSuccess' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/operations/ModernWorkOrderManagement.tsx
+59:22  Warning: 'setSearchTerm' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+60:22  Warning: 'setTypeFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+61:24  Warning: 'setStatusFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+62:26  Warning: 'setPriorityFilter' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/ui/data-table.tsx
+7:10  Warning: 'Badge' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/ui/stat-card.tsx
+3:1  Warning: All imports in the declaration are only used as types. Use `import type`.  @typescript-eslint/consistent-type-imports
+
+./src/lib/auth.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment').
+3:10  Warning: 'PrismaAdapter' is defined but never used.  @typescript-eslint/no-unused-vars
+5:10  Warning: 'prisma' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/offline.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+2:20  Warning: 'del' is defined but never used.  @typescript-eslint/no-unused-vars
+2:25  Warning: 'keys' is defined but never used.  @typescript-eslint/no-unused-vars
+2:31  Warning: 'clear' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/offlinePacks.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+2:25  Warning: 'keys' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/redis.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-call').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+73:14  Warning: 'streamName' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+100:16  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+173:14  Warning: 'streamName' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/sse.ts
+66:6  Warning: React Hook useEffect has missing dependencies: 'connect' and 'disconnect'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/telemetry.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+
+./src/middleware.ts
+4:23  Warning: 'req' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/server/api/config/trpc.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+121:9  Warning: 'requiredPermissions' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+132:53  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+133:9  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/server/api/middleware/rbac.ts
+131:19  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+147:19  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/server/api/root.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment').
+
+./src/server/api/routers/core.ts
+386:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+399:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/server/api/routers/inventory.ts
+104:15  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+174:15  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+230:15  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+500:15  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+522:15  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/server/api/routers/kpi.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-inferrable-types').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-call').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+
+./src/server/api/routers/rental.ts
+3:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-call').
+4:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+5:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+155:9  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+271:9  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+367:9  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+432:9  Warning: 'idempotencyKey' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/server/api/routers/workflow.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-floating-promises').
+4:49  Warning: 'WorkflowInstance' is defined but never used.  @typescript-eslint/no-unused-vars
+25:24  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+83:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+108:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+119:24  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+126:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+141:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+141:26  Warning: 'input' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+149:21  Warning: 'ctx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/server/api/services/auditService.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+
+./src/server/api/services/configService.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+
+./src/server/api/services/eventPublisher.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-inferrable-types').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-empty-function').
+
+./src/server/api/services/workflowService.ts
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-member-access').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-argument').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-return').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-inferrable-types').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-misused-promises').
+1:1  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-empty-function').
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

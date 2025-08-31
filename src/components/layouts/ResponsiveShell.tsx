@@ -1,13 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useScroll, useTransform, useMotionValueEvent, motion } from 'framer-motion';
+
 import { DashboardLayout } from './DashboardLayout';
 import { OfflineStatus } from '@/components/offline/OfflineStatus';
 import { SimpleOfflineIndicator } from '@/components/offline/SimpleOfflineIndicator';
-import { GlobalSearch } from '@/components/core/GlobalSearch';
 import { NotificationCenter } from '@/components/core/NotificationCenter';
 import { UserMenu } from '@/components/core/UserMenu';
+import { Input } from '@/components/ui/input';
+import { trpc } from '@/lib/trpc';
+
+
 
 
 // ========================================
@@ -23,7 +28,61 @@ export function ResponsiveShell({ children }: ResponsiveShellProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // 1) REFERENCE ke container yang discroll
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 2) DENGARKAN scroll pada container tsb, bukan window
+  const { scrollY } = useScroll({ container: scrollRef });
+
+  // Background semi-transparan bertahap (jangan 0.8, terlalu tebal)
+  const bg = useTransform(
+    scrollY,
+    [0, 10, 60],
+    ['rgba(10,10,12,0.00)', 'rgba(10,10,12,0.10)', 'rgba(10,10,12,0.22)']
+  );
+
+  // Blur bertahap
+  const blur = useTransform(
+    scrollY,
+    [0, 10, 60],
+    ['saturate(100%) blur(0px)', 'saturate(115%) blur(8px)', 'saturate(140%) blur(14px)']
+  );
+
+  // Shadow & border tipis saat scroll
+  const shadow = useTransform(
+    scrollY,
+    [0, 60],
+    ['0 0 0 rgba(0,0,0,0)', '0 10px 30px rgba(0,0,0,0.25)']
+  );
+
+  const borderColor = useTransform(
+    scrollY,
+    [0, 60],
+    ['rgba(255,255,255,0.00)', 'rgba(255,255,255,0.10)']
+  );
+
+  // (Opsional) debug: pastikan scrollY berubah
+  useMotionValueEvent(scrollY, 'change', (v) => {
+    console.log('container scrollY =', v);
+  });
+
+  // Sidebar state - using default values since we can't access useSidebar here
+  const sidebarState = { open: true, isMobile: false };
+
+  // Search queries
+  const { data: searchResults = [], isLoading: isSearchLoading } = trpc.core.search.global.useQuery(
+    { query: searchQuery, limit: 5 },
+    { enabled: searchQuery.length > 2 && showSearch }
+  );
+
+  const { data: suggestions = [] } = trpc.core.search.suggestions.useQuery(
+    { query: searchQuery },
+    { enabled: searchQuery.length > 0 && searchQuery.length <= 2 && showSearch }
+  );
 
   // Check if mobile
   useEffect(() => {
@@ -36,25 +95,18 @@ export function ResponsiveShell({ children }: ResponsiveShellProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Handle scroll for blur effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
 
 
-  // Handle keyboard shortcuts
+
+  // Handle keyboard shortcuts and search navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + K for search
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         setShowSearch(true);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
       }
       
       // Ctrl/Cmd + N for notifications
@@ -62,11 +114,37 @@ export function ResponsiveShell({ children }: ResponsiveShellProps) {
         e.preventDefault();
         setShowNotifications(true);
       }
+
+      // Search navigation when search is open
+      if (showSearch) {
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            setSelectedIndex(prev => Math.min(prev + 1, searchResults.length - 1));
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            setSelectedIndex(prev => Math.max(prev - 1, 0));
+            break;
+          case 'Enter':
+            e.preventDefault();
+            if (searchResults[selectedIndex]) {
+              window.location.href = searchResults[selectedIndex].url;
+              setShowSearch(false);
+              setSearchQuery('');
+            }
+            break;
+          case 'Escape':
+            setShowSearch(false);
+            setSearchQuery('');
+            break;
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showSearch, searchResults, selectedIndex]);
 
   // Loading state
   if (status === 'loading') {
@@ -100,103 +178,172 @@ export function ResponsiveShell({ children }: ResponsiveShellProps) {
       {/* Offline indicator */}
       <SimpleOfflineIndicator />
       
-      {/* Main layout */}
+      {/* Main layout with sidebar and header */}
       <DashboardLayout>
-        {/* Top bar for mobile */}
-        {isMobile && (
-          <div className={`sticky top-0 z-40 border-b px-4 py-1 transition-all duration-200 ${
-            isScrolled 
-              ? 'bg-background/80 backdrop-blur-md border-border/50' 
-              : 'bg-background border-border'
-          }`}>
-            <div className="flex items-center justify-between">
-              <h1 className="text-lg font-semibold">NextGen ERP</h1>
-              <div className="flex items-center gap-2">
+        {/* Fixed Header with blur effect - positioned after sidebar */}
+        <motion.header
+          style={{
+            // Header dimulai setelah sidebar dengan responsive behavior
+            left: 'var(--sidebar-width, 16rem)',
+            width: 'calc(100% - var(--sidebar-width, 16rem))',
+
+            backgroundColor: bg,
+            backdropFilter: blur,
+            WebkitBackdropFilter: blur,
+
+            boxShadow: shadow,
+            borderBottom: '1px solid',
+            borderColor,
+            willChange:
+              'background-color, backdrop-filter, box-shadow, border-color, left, width',
+          }}
+          className="fixed top-0 z-50 transition-[left,width] duration-200 
+                     md:left-[var(--sidebar-width)] md:w-[calc(100%-var(--sidebar-width))]
+                     group-data-[collapsible=icon]:md:left-[var(--sidebar-width-icon)] group-data-[collapsible=icon]:md:w-[calc(100%-var(--sidebar-width-icon))]
+                     group-data-[collapsible=offcanvas]:md:left-0 group-data-[collapsible=offcanvas]:md:w-full
+                     max-md:left-0 max-md:w-full"
+        >
+          <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+            {/* Search Input - takes up available space */}
+            <div className="flex-1 max-w-md relative">
+              {showSearch ? (
+                <div className="relative">
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Search equipment, items, customers, orders..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setSelectedIndex(0);
+                    }}
+                    className="pl-10 pr-10"
+                    onBlur={() => {
+                      // Close search after a delay to allow clicking on results
+                      setTimeout(() => {
+                        if (!searchQuery) {
+                          setShowSearch(false);
+                        }
+                      }, 200);
+                    }}
+                  />
+                  <svg
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <button
+                    onClick={() => {
+                      setShowSearch(false);
+                      setSearchQuery('');
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  
+                  {/* Search Results Dropdown */}
+                  {(searchResults.length > 0 || suggestions.length > 0) && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
+                      {searchQuery.length <= 2 && suggestions.length > 0 && (
+                        <div className="p-2">
+                          <div className="text-xs text-muted-foreground mb-2">Suggestions</div>
+                          {suggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setSearchQuery(suggestion)}
+                              className="w-full text-left px-3 py-2 hover:bg-muted rounded text-sm"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {searchResults.length > 0 && (
+                        <div className="p-2">
+                          <div className="text-xs text-muted-foreground mb-2">Results</div>
+                          {searchResults.map((result, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                window.location.href = result.url;
+                                setShowSearch(false);
+                                setSearchQuery('');
+                              }}
+                              className={`w-full text-left px-3 py-2 hover:bg-muted rounded text-sm flex items-center gap-2 ${
+                                index === selectedIndex ? 'bg-muted' : ''
+                              }`}
+                            >
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                {result.type}
+                              </span>
+                              <span className="flex-1">{result.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {isSearchLoading && (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          Searching...
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <button
                   onClick={() => setShowSearch(true)}
-                  className="p-2 hover:bg-muted rounded-md"
+                  className="w-full text-left px-3 py-2 text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-md transition-colors"
                   title="Search (Ctrl+K)"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span className="text-sm">Search...</span>
+                    <kbd className="ml-auto text-xs bg-muted px-1.5 py-0.5 rounded">⌘K</kbd>
+                  </div>
                 </button>
-                
-                <button
-                  onClick={() => setShowNotifications(true)}
-                  className="p-2 hover:bg-muted rounded-md relative"
-                  title="Notifications (Ctrl+N)"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 19.5L9 15l4.5 4.5L18 15l4.5 4.5" />
-                  </svg>
-                  {/* Notification badge */}
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-                </button>
-                
-                <UserMenu />
-              </div>
+              )}
             </div>
-          </div>
-        )}
 
-        {/* Desktop top bar */}
-        {!isMobile && (
-          <div className={`sticky top-0 z-40 border-b px-6 py-1 transition-all duration-200 ${
-            isScrolled 
-              ? 'bg-background/80 backdrop-blur-md border-border/50' 
-              : 'bg-background border-border'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">NextGen ERP</h1>
-                
-                <button
-                  onClick={() => setShowSearch(true)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground border rounded-md bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Search...
-                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                    <span className="text-xs">⌘</span>K
-                  </kbd>
-                </button>
-              </div>
+            {/* Right side actions */}
+            <div className="flex items-center gap-2 ml-4">
+              {/* Notifications button */}
+              <button
+                onClick={() => setShowNotifications(true)}
+                className="p-2 hover:bg-muted rounded-md relative"
+                title="Notifications (Ctrl+N)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 19.5L9 15l4.5 4.5L18 15l4.5 4.5" />
+                </svg>
+                {/* Notification badge */}
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+              </button>
               
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setShowNotifications(true)}
-                  className="p-2 hover:bg-muted rounded-md relative"
-                  title="Notifications (Ctrl+N)"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.5 19.5L9 15l4.5 4.5L18 15l4.5 4.5" />
-                  </svg>
-                  {/* Notification badge */}
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-                </button>
-                
-                <UserMenu />
-              </div>
+              {/* User Menu */}
+              <UserMenu />
             </div>
           </div>
-        )}
+        </motion.header>
 
-        {/* Main content */}
-        <div className="flex-1">
+        {/* 4) CONTAINER SCROLL → pakai ref & overflow-y-auto */}
+        <div
+          ref={scrollRef}
+          className="flex-1 pt-16 overflow-y-auto h-[calc(100vh-4rem)]"
+        >
           {children}
         </div>
       </DashboardLayout>
 
-      {/* Global Search Modal */}
-      {showSearch && (
-        <GlobalSearch
-          isOpen={showSearch}
-          onClose={() => setShowSearch(false)}
-        />
-      )}
+
 
       {/* Notification Center */}
       {showNotifications && (

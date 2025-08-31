@@ -3,9 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-floating-promises */
+
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useState, useMemo } from 'react';
@@ -13,14 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ModernCard, ModernCardContent, ModernCardDescription, ModernCardHeader, ModernCardTitle } from '@/components/ui/modern-card';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
 import { 
-  TrendingUp, TrendingDown, Activity, Clock, 
+  TrendingUp, Activity, Clock, 
   DollarSign, Package, AlertTriangle, CheckCircle,
-  BarChart3, PieChart, LineChart, Target,
-  Calendar, Filter, Download
+  BarChart3, LineChart, Calendar, Filter, Download
 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
@@ -284,7 +281,7 @@ export function ModernPerformanceAnalytics({ onSuccess }: ModernPerformanceAnaly
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Completion Rate</span>
                     <span className="font-semibold">
-                      {maintenanceMetrics?.totalWorkOrders > 0 
+                      {maintenanceMetrics?.totalWorkOrders && maintenanceMetrics.totalWorkOrders > 0 
                         ? Math.round((maintenanceMetrics.completedWorkOrders / maintenanceMetrics.totalWorkOrders) * 100)
                         : 0}%
                     </span>

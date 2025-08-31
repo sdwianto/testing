@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-floating-promises */
+
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -17,16 +17,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ModernCard, ModernCardContent, ModernCardDescription, ModernCardHeader, ModernCardTitle } from '@/components/ui/modern-card';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { DashboardSkeleton } from '@/components/ui/loading-skeleton';
 import { 
-  Plus, Edit, Trash2, Search, Eye, 
+  Plus, Edit, Trash2, Eye, 
   Package, Calendar, Clock, AlertTriangle, 
-  CheckCircle, Settings, Activity, TrendingUp,
+  CheckCircle, Settings, TrendingUp, Activity,
   DollarSign, MapPin, User, FileText,
-  ArrowRight, ArrowLeft, RotateCcw
+  ArrowRight
 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -179,8 +179,9 @@ export function ModernEquipmentLifecycleManagement({ onSuccess }: ModernEquipmen
 
   // Get events data
   const allEvents = useMemo(() => {
-    return lifecycleEvents?.events || [];
-  }, [lifecycleEvents]) as any[];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return (lifecycleEvents?.events || []) as any[];
+  }, [lifecycleEvents]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -493,10 +494,10 @@ export function ModernEquipmentLifecycleManagement({ onSuccess }: ModernEquipmen
                 </div>
                 <div className="space-y-4">
                   {Object.entries(
-                    allEvents.reduce((acc: any, event: any) => {
+                    allEvents.reduce((acc: Record<string, number>, event: any) => {
                       acc[event.eventType] = (acc[event.eventType] || 0) + 1;
                       return acc;
-                    }, {}) as any
+                    }, {} as Record<string, number>)
                   ).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -509,7 +510,7 @@ export function ModernEquipmentLifecycleManagement({ onSuccess }: ModernEquipmen
                         }`}></div>
                         <span className="text-sm font-medium dark:text-white">{type}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{count as number}</span>
+                      <span className="text-sm text-muted-foreground">{count}</span>
                     </div>
                   ))}
                 </div>
@@ -601,7 +602,7 @@ export function ModernEquipmentLifecycleManagement({ onSuccess }: ModernEquipmen
                   <p className="text-sm text-muted-foreground">Lifecycle events by type</p>
                 </div>
                 <div className="space-y-4">
-                  {Object.entries(lifecycleAnalytics?.eventsByType || {}).map(([type, count]) => (
+                  {Object.entries(lifecycleAnalytics?.eventsByType || {} as Record<string, number>).map(([type, count]) => (
                     <div key={type} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className={`h-3 w-3 rounded-full ${
