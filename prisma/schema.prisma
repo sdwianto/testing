@@ -35,6 +35,12 @@ model Tenant {
     usageLogs         UsageLog[]
     breakdowns        Breakdown[]
     workOrders        WorkOrder[]
+    workOrderItems    WorkOrderItem[]
+    workOrderHistory  WorkOrderHistory[]
+    maintenanceSchedules MaintenanceSchedule[]
+    equipmentSpecs    EquipmentSpec[]
+    equipmentDocuments EquipmentDocument[]
+    lifecycleEvents   LifecycleEvent[]
     equipmentRentals  EquipmentRental[]
     rentalBills       RentalBill[]
     rentalUsage       RentalUsage[]
@@ -53,6 +59,17 @@ model Tenant {
     purchaseRequestItems PurchaseRequestItem[]
     purchaseOrders    PurchaseOrder[]
     purchaseOrderItems PurchaseOrderItem[]
+    partsList         PartsList[]
+    labourInstructions LabourInstructions[]
+    qualityInspections QualityInspection[]
+    maintenanceStatusHistory MaintenanceStatusHistory[]
+    workOrderApprovals WorkOrderApproval[]
+    predictiveMaintenance PredictiveMaintenance[]
+    maintenanceEfficiency MaintenanceEfficiency[]
+    routingInstructions RoutingInstructions[]
+    payrollTimeEntries PayrollTimeEntry[]
+    modelWorkOrders   ModelWorkOrder[]
+    workOrderProgress  WorkOrderProgress[]
 }
 
 model User {
@@ -96,6 +113,11 @@ model User {
     approvedPurchaseRequests PurchaseRequest[] @relation("PurchaseRequestApprover")
     createdPurchaseOrders PurchaseOrder[] @relation("PurchaseOrderCreator")
     updatedPurchaseOrders PurchaseOrder[] @relation("PurchaseOrderUpdater")
+    assignedWorkOrders   WorkOrder[] @relation("AssignedTechnician")
+    labourInstructions   LabourInstructions[] @relation("LabourInstructionsAssignedTo")
+    qualityInspections   QualityInspection[] @relation("QualityInspectionsInspector")
+    workOrderApprovals   WorkOrderApproval[] @relation("WorkOrderApprovalsApprover")
+    payrollTimeEntries   PayrollTimeEntry[] @relation("PayrollTimeEntryEmployee")
     
     @@index([tenantId, email]) // Composite index (R2, R8)
     @@index([tenantId, isActive, createdAt]) // For tenant-scoped queries
@@ -201,11 +223,34 @@ model Equipment {
     id                String   @id @default(uuid())
     tenantId          String   // Multi-tenant support (R2)
     code              String   @unique
+    name              String   // Equipment name
     type              String   // Equipment type
+    category          String   // Equipment category
     description       String?
+    
+    // Technical Specifications (JDE F1201 equivalent)
+    manufacturer      String?
+    model             String?
+    serialNumber      String?
+    yearOfManufacture Int?
+    specifications    Json?    // Flexible specifications storage
+    
+    // Location & Status
     currentSiteId     String?  // Current location
+    currentStatus     String   @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE, REPAIR, DISPOSED
+    parentEquipmentId String?  // Equipment hierarchy
+    
+    // Financial Information
     acquisitionCost   Decimal  @db.Decimal(14,2) // Money field (R8)
     currentValue      Decimal  @db.Decimal(14,2) // Money field (R8)
+    depreciationMethod String? // STRAIGHT_LINE, DECLINING_BALANCE, etc.
+    usefulLife        Int?     // Years
+    
+    // Performance Metrics
+    utilizationRate   Decimal  @db.Decimal(5,2) @default(0) // Percentage
+    availabilityRate  Decimal  @db.Decimal(5,2) @default(0) // Percentage
+    totalHours        Decimal  @db.Decimal(10,2) @default(0) // Total operating hours
+    
     isActive          Boolean  @default(true)
     
     // Version field for conflict resolution (R4)
@@ -216,13 +261,25 @@ model Equipment {
     
     // Relations
     tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    parentEquipment   Equipment? @relation("EquipmentHierarchy", fields: [parentEquipmentId], references: [id])
+    childEquipment    Equipment[] @relation("EquipmentHierarchy")
     usageLogs         UsageLog[]
     breakdowns        Breakdown[]
     workOrders        WorkOrder[]
     equipmentRentals  EquipmentRental[]
+    maintenanceSchedules MaintenanceSchedule[]
+    equipmentSpecs    EquipmentSpec[]
+    equipmentDocuments EquipmentDocument[]
+    lifecycleEvents   LifecycleEvent[]
+    maintenanceStatusHistory MaintenanceStatusHistory[]
+    predictiveMaintenance PredictiveMaintenance[]
+    maintenanceEfficiency MaintenanceEfficiency[]
+    payrollTimeEntries PayrollTimeEntry[]
     
     @@index([tenantId, code]) // Composite index (R2, R8)
     @@index([tenantId, isActive, type]) // For equipment queries
+    @@index([tenantId, currentStatus]) // For status-based queries
+    @@index([tenantId, parentEquipmentId]) // For hierarchy queries
 }
 
 model UsageLog {
@@ -242,6 +299,217 @@ model UsageLog {
     
     @@index([tenantId, equipmentId, shiftDate]) // For equipment usage queries
     @@index([tenantId, shiftDate]) // For date-based queries
+}
+
+// Equipment Specifications (JDE F1201 equivalent)
+model EquipmentSpec {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    specType          String   // DIMENSIONS, CAPACITY, POWER, PERFORMANCE, etc.
+    specName          String   // Specification name
+    specValue         String   // Specification value
+    specUnit          String?  // Unit of measurement
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, specType]) // For equipment spec queries
+}
+
+// Equipment Documents (manuals, certificates, etc.)
+model EquipmentDocument {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    documentType      String   // MANUAL, CERTIFICATE, WARRANTY, INSPECTION, etc.
+    documentName      String
+    documentUrl       String?  // File URL
+    documentContent   String?  // Text content
+    issueDate         DateTime?
+    expiryDate        DateTime?
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, documentType]) // For equipment document queries
+}
+
+// Work Orders (JDE F4801 equivalent)
+model WorkOrder {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderNumber   String   @unique // Auto-generated work order number
+    equipmentId       String
+    workOrderType     String   // PREVENTIVE, CORRECTIVE, EMERGENCY, INSPECTION
+    priority          String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+    status            String   @default("OPEN") // OPEN, IN_PROGRESS, COMPLETED, CANCELLED
+    
+    // Work Order Details
+    title             String
+    description       String?
+    problemDescription String?
+    
+    // Scheduling
+    scheduledDate     DateTime?
+    startDate         DateTime?
+    completedDate     DateTime?
+    estimatedDuration Int?     // Hours
+    
+    // Cost Tracking
+    estimatedCost     Decimal  @db.Decimal(14,2) @default(0)
+    actualCost        Decimal  @db.Decimal(14,2) @default(0)
+    laborCost         Decimal  @db.Decimal(14,2) @default(0)
+    partsCost         Decimal  @db.Decimal(14,2) @default(0)
+    materialCost      Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Resource Allocation
+    assignedTechnicianId String?
+    assignedTeamId    String?
+    requiredTools     Json?    // Array of required tools
+    requiredParts     Json?    // Array of required parts
+    
+    // Performance Tracking
+    downtimeHours     Decimal  @db.Decimal(8,2) @default(0)
+    repairTime        Decimal  @db.Decimal(8,2) @default(0)
+    
+    // Completion Details
+    workPerformed     String?
+    rootCause         String?
+    recommendations   String?
+    
+    isActive          Boolean  @default(true)
+    
+    // Version field for conflict resolution (R4)
+    version           Int      @default(1)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    assignedTechnician User?   @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id])
+    workOrderItems    WorkOrderItem[]
+    workOrderHistory  WorkOrderHistory[]
+    partsList         PartsList[]
+    labourInstructions LabourInstructions[]
+    qualityInspections QualityInspection[]
+    workOrderApprovals WorkOrderApproval[]
+    routingInstructions RoutingInstructions[]
+    payrollTimeEntries PayrollTimeEntry[]
+    workOrderProgress  WorkOrderProgress[]
+    
+    @@index([tenantId, workOrderNumber]) // For work order queries
+    @@index([tenantId, equipmentId, status]) // For equipment work order queries
+    @@index([tenantId, status, scheduledDate]) // For scheduling queries
+}
+
+// Work Order Items (parts, materials, etc.)
+model WorkOrderItem {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    itemType          String   // PART, MATERIAL, TOOL, LABOR
+    itemId            String?  // Reference to item (if applicable)
+    itemName          String
+    itemDescription   String?
+    quantity          Decimal  @db.Decimal(10,2)
+    unitCost          Decimal  @db.Decimal(14,2) @default(0)
+    totalCost         Decimal  @db.Decimal(14,2) @default(0)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    
+    @@index([tenantId, workOrderId, itemType]) // For work order item queries
+}
+
+// Work Order History (audit trail)
+model WorkOrderHistory {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    action            String   // CREATED, ASSIGNED, STARTED, COMPLETED, etc.
+    description       String?
+    performedBy       String?  // User ID
+    performedAt       DateTime @default(now())
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    
+    @@index([tenantId, workOrderId, performedAt]) // For work order history queries
+}
+
+// Maintenance Schedules (JDE F1301 equivalent)
+model MaintenanceSchedule {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    scheduleName      String
+    maintenanceType   String   // PREVENTIVE, PREDICTIVE, CONDITION_BASED
+    frequencyType     String   // HOURS, DAYS, WEEKS, MONTHS
+    frequencyValue    Int      // Frequency value
+    lastMaintenanceDate DateTime?
+    nextMaintenanceDate DateTime
+    estimatedDuration Int?     // Hours
+    estimatedCost     Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Maintenance Tasks
+    maintenanceTasks  Json?    // Array of maintenance tasks
+    requiredParts     Json?    // Array of required parts
+    requiredTools     Json?    // Array of required tools
+    
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, nextMaintenanceDate]) // For maintenance scheduling queries
+    @@index([tenantId, nextMaintenanceDate]) // For upcoming maintenance queries
+}
+
+// Equipment Lifecycle Events (JDE F1201 equivalent)
+model LifecycleEvent {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    eventType         String   // ACQUISITION, DEPLOYMENT, TRANSFER, MAINTENANCE, UPGRADE, DISPOSAL
+    eventDate         DateTime
+    description       String?
+    cost              Decimal  @db.Decimal(14,2) @default(0) // Event cost
+    location          String?  // Event location
+    vendor            String?  // Vendor/supplier
+    notes             String?  // Additional notes
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, eventDate]) // For equipment lifecycle queries
+    @@index([tenantId, eventType, eventDate]) // For event type queries
+    @@index([tenantId, eventDate]) // For date-based lifecycle queries
 }
 
 model Breakdown {
@@ -264,17 +532,183 @@ model Breakdown {
     @@index([tenantId, startAt]) // For date-based breakdown queries
 }
 
-model WorkOrder {
+// ========================================
+// JDE F4801/F1301 ADVANCED FEATURES
+// ========================================
+
+// Parts List (JDE F3111 equivalent)
+model PartsList {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    componentNumber   String   // Part/component number
+    componentBranchId String?  // Branch ID for the component
+    description       String
+    quantity          Decimal  @db.Decimal(10,2)
+    unitCost          Decimal  @db.Decimal(14,2) @default(0)
+    totalCost         Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Component details
+    componentType     String   // PART, MATERIAL, TOOL, CONSUMABLE
+    isRequired        Boolean  @default(true)
+    isAvailable       Boolean  @default(true)
+    location          String?  // Storage location
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    
+    @@index([tenantId, workOrderId, componentNumber]) // For parts list queries
+}
+
+// Labour Instructions (JDE F3112 equivalent)
+model LabourInstructions {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    craftType         String   // MECHANIC, ELECTRICIAN, WELDER, etc.
+    operationSequence Int      // Sequence number
+    workCentre        String?  // Work centre code
+    operationDescription String
+    estimatedHours    Decimal  @db.Decimal(8,2) @default(0)
+    actualHours       Decimal  @db.Decimal(8,2) @default(0)
+    
+    // Skill requirements
+    skillLevel        String   // BASIC, INTERMEDIATE, ADVANCED, EXPERT
+    requiredCertification String?
+    
+    // Status tracking
+    status            String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+    assignedTo        String?  // User ID
+    startedAt         DateTime?
+    completedAt       DateTime?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    assignedUser      User?    @relation("LabourInstructionsAssignedTo", fields: [assignedTo], references: [id])
+    
+    @@index([tenantId, workOrderId, operationSequence]) // For labour instruction queries
+}
+
+// Quality Management (JDE F3701/F3702/F3703/F3711 equivalent)
+model QualityInspection {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    inspectionType    String   // PRE_WORK, IN_PROGRESS, POST_WORK, FINAL
+    inspectionDate    DateTime
+    inspectorId       String   // User ID of inspector
+    
+    // Inspection details
+    specificationData Json?    // Inspection specifications
+    testData          Json?    // Test data and measurements
+    testResults       Json?    // Test results and outcomes
+    
+    // Quality metrics
+    passFail          Boolean? // Pass/Fail result
+    qualityScore      Decimal? @db.Decimal(5,2) // Quality score (0-100)
+    defectsFound      Json?    // Array of defects found
+    correctiveActions Json?    // Corrective actions taken
+    
+    // Documentation
+    inspectionNotes   String?
+    photos            Json?    // Array of photo URLs
+    certificates      Json?    // Array of certificate URLs
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    inspector         User     @relation("QualityInspectionsInspector", fields: [inspectorId], references: [id])
+    
+    @@index([tenantId, workOrderId, inspectionType]) // For quality inspection queries
+}
+
+// Maintenance Status History (JDE F1307 equivalent)
+model MaintenanceStatusHistory {
     id                String   @id @default(uuid())
     tenantId          String   // Multi-tenant support (R2)
     equipmentId       String
-    type              String   // preventive|corrective|emergency
-    status            String   // planned|released|in_progress|completed|canceled
-    scheduledDate     DateTime?
-    estimatedCost     Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
-    actualCost        Decimal  @db.Decimal(14,2) @default(0) // Money field (R8)
-    description       String?
-    assignedTo        String?  // Assigned user ID
+    dataItem          String   // Status field name
+    historicalValue   String   // Previous value
+    newValue          String   // New value
+    effectiveDate     DateTime
+    changeReason      String?  // Reason for change
+    changedBy         String?  // User who made the change
+    
+    createdAt         DateTime @default(now())
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, effectiveDate]) // For status history queries
+}
+
+// Work Order Approval Workflow
+model WorkOrderApproval {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    approvalLevel     Int      // Approval level (1, 2, 3, etc.)
+    approverId        String   // User ID of approver
+    status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+    comments          String?
+    approvedAt        DateTime?
+    
+    // Cost-based routing
+    approvalThreshold Decimal? @db.Decimal(14,2) // Cost threshold for this level
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    approver          User     @relation("WorkOrderApprovalsApprover", fields: [approverId], references: [id])
+    
+    @@index([tenantId, workOrderId, approvalLevel]) // For approval workflow queries
+}
+
+// ========================================
+// ADVANCED ANALYTICS & PREDICTIVE MAINTENANCE
+// ========================================
+
+// Predictive Maintenance Models
+model PredictiveMaintenance {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    modelType         String   // FAILURE_PREDICTION, COST_OPTIMIZATION, EFFICIENCY_ANALYSIS
+    modelVersion      String   // Model version for tracking
+    predictionDate    DateTime
+    predictionHorizon Int      // Days ahead for prediction
+    
+    // Prediction Results
+    failureProbability Decimal @db.Decimal(5,4) // 0.0000 to 1.0000
+    predictedFailureDate DateTime?
+    confidenceLevel   Decimal @db.Decimal(5,4) // 0.0000 to 1.0000
+    riskLevel         String   // LOW, MEDIUM, HIGH, CRITICAL
+    
+    // Recommended Actions
+    recommendedActions Json?    // Array of recommended maintenance actions
+    estimatedCost     Decimal  @db.Decimal(14,2) @default(0)
+    costBenefitRatio  Decimal  @db.Decimal(8,4) @default(0)
+    
+    // Model Performance
+    modelAccuracy     Decimal? @db.Decimal(5,4) // Model accuracy score
+    lastTrainingDate  DateTime?
+    
+    isActive          Boolean  @default(true)
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
     
@@ -282,9 +716,229 @@ model WorkOrder {
     tenant            Tenant   @relation(fields: [tenantId], references: [id])
     equipment         Equipment @relation(fields: [equipmentId], references: [id])
     
-    @@index([tenantId, equipmentId, status]) // For equipment work order queries
-    @@index([tenantId, status, scheduledDate]) // For work order scheduling
+    @@index([tenantId, equipmentId, predictionDate]) // For predictive maintenance queries
+    @@index([tenantId, riskLevel, predictionDate]) // For risk-based queries
 }
+
+// Maintenance Efficiency Metrics
+model MaintenanceEfficiency {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    equipmentId       String
+    periodStart       DateTime
+    periodEnd         DateTime
+    
+    // Efficiency Metrics
+    mttr              Decimal  @db.Decimal(8,2) @default(0) // Mean Time To Repair (hours)
+    mtbf              Decimal  @db.Decimal(8,2) @default(0) // Mean Time Between Failures (hours)
+    availability      Decimal  @db.Decimal(5,2) @default(0) // Availability percentage
+    utilization       Decimal  @db.Decimal(5,2) @default(0) // Utilization percentage
+    oee               Decimal  @db.Decimal(5,2) @default(0) // Overall Equipment Effectiveness
+    
+    // Cost Metrics
+    maintenanceCost   Decimal  @db.Decimal(14,2) @default(0)
+    downtimeCost      Decimal  @db.Decimal(14,2) @default(0)
+    totalCost         Decimal  @db.Decimal(14,2) @default(0)
+    costPerHour       Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Performance Metrics
+    plannedMaintenance Decimal @db.Decimal(5,2) @default(0) // Percentage of planned maintenance
+    emergencyMaintenance Decimal @db.Decimal(5,2) @default(0) // Percentage of emergency maintenance
+    firstTimeFixRate  Decimal  @db.Decimal(5,2) @default(0) // First time fix rate percentage
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, equipmentId, periodStart]) // For efficiency queries
+    @@index([tenantId, periodStart, periodEnd]) // For period-based queries
+}
+
+// ========================================
+// SHOP FLOOR CONTROL & ROUTING
+// ========================================
+
+// Routing Instructions (JDE Shop Floor Control equivalent)
+model RoutingInstructions {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    operationSequence Int      // Operation sequence number
+    operationCode     String   // Operation code
+    operationDescription String
+    workCentre        String   // Work centre where operation is performed
+    
+    // Resource Requirements
+    requiredSkills    Json?    // Array of required skills
+    requiredTools     Json?    // Array of required tools
+    requiredParts     Json?    // Array of required parts
+    
+    // Time Estimates
+    setupTime         Decimal  @db.Decimal(8,2) @default(0) // Setup time in hours
+    runTime           Decimal  @db.Decimal(8,2) @default(0) // Run time in hours
+    queueTime         Decimal  @db.Decimal(8,2) @default(0) // Queue time in hours
+    moveTime          Decimal  @db.Decimal(8,2) @default(0) // Move time in hours
+    
+    // Actual Times
+    actualSetupTime   Decimal  @db.Decimal(8,2) @default(0)
+    actualRunTime     Decimal  @db.Decimal(8,2) @default(0)
+    actualQueueTime   Decimal  @db.Decimal(8,2) @default(0)
+    actualMoveTime    Decimal  @db.Decimal(8,2) @default(0)
+    
+    // Status Tracking
+    status            String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+    startedAt         DateTime?
+    completedAt       DateTime?
+    assignedTo        String?  // User ID assigned to this operation
+    
+    // Quality Control
+    qualityCheckRequired Boolean @default(false)
+    qualityCheckPassed   Boolean?
+    qualityNotes         String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    
+    @@index([tenantId, workOrderId, operationSequence]) // For routing queries
+    @@index([tenantId, workCentre, status]) // For work centre queries
+}
+
+// ========================================
+// PAYROLL INTEGRATION & TIME TRACKING
+// ========================================
+
+// Payroll Time Entry (JDE F06116/F0618 equivalent)
+model PayrollTimeEntry {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    employeeId        String   // Employee ID
+    workOrderId       String?  // Associated work order
+    equipmentId       String?  // Associated equipment
+    
+    // Time Tracking
+    workDate          DateTime
+    startTime         DateTime
+    endTime           DateTime
+    totalHours        Decimal  @db.Decimal(8,2) // Total hours worked
+    overtimeHours     Decimal  @db.Decimal(8,2) @default(0) // Overtime hours
+    
+    // Work Details
+    workType          String   // REGULAR, OVERTIME, HOLIDAY, SICK, VACATION
+    workDescription   String?  // Description of work performed
+    location          String?  // Work location
+    
+    // Payroll Integration
+    hourlyRate        Decimal  @db.Decimal(14,2) @default(0)
+    totalPay          Decimal  @db.Decimal(14,2) @default(0)
+    overtimeRate      Decimal  @db.Decimal(14,2) @default(0)
+    overtimePay       Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Status
+    status            String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, PAID
+    approvedBy        String?  // User ID who approved
+    approvedAt        DateTime?
+    exportedToPayroll Boolean  @default(false)
+    payrollExportDate DateTime?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    employee          User     @relation("PayrollTimeEntryEmployee", fields: [employeeId], references: [id])
+    workOrder         WorkOrder? @relation(fields: [workOrderId], references: [id])
+    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
+    
+    @@index([tenantId, employeeId, workDate]) // For employee time queries
+    @@index([tenantId, workOrderId, workDate]) // For work order time queries
+    @@index([tenantId, status, workDate]) // For payroll status queries
+}
+
+// ========================================
+// ADVANCED WORK ORDER FEATURES
+// ========================================
+
+// Model Work Orders (Template Work Orders)
+model ModelWorkOrder {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    modelNumber       String   @unique // Model work order number
+    modelName         String   // Model work order name
+    description       String?
+    
+    // Work Order Template
+    workOrderType     String   // PREVENTIVE, CORRECTIVE, EMERGENCY, INSPECTION
+    priority          String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+    estimatedDuration Int?     // Estimated duration in hours
+    estimatedCost     Decimal  @db.Decimal(14,2) @default(0)
+    
+    // Template Details
+    standardTasks     Json?    // Array of standard tasks
+    requiredParts     Json?    // Array of required parts
+    requiredTools     Json?    // Array of required tools
+    requiredSkills    Json?    // Array of required skills
+    
+    // Quality Requirements
+    qualityChecks     Json?    // Array of quality check requirements
+    safetyRequirements Json?   // Array of safety requirements
+    
+    // Equipment Applicability
+    applicableEquipmentTypes Json? // Array of equipment types this model applies to
+    applicableEquipmentModels Json? // Array of equipment models this model applies to
+    
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    
+    @@index([tenantId, modelNumber]) // For model work order queries
+    @@index([tenantId, workOrderType]) // For work order type queries
+}
+
+// Work Order Progress Tracking
+model WorkOrderProgress {
+    id                String   @id @default(uuid())
+    tenantId          String   // Multi-tenant support (R2)
+    workOrderId       String
+    progressDate      DateTime
+    progressPercentage Decimal @db.Decimal(5,2) @default(0) // 0.00 to 100.00
+    
+    // Progress Details
+    completedTasks    Json?    // Array of completed tasks
+    remainingTasks    Json?    // Array of remaining tasks
+    currentPhase      String?  // Current work phase
+    nextMilestone     String?  // Next milestone
+    
+    // Resource Usage
+    hoursWorked       Decimal  @db.Decimal(8,2) @default(0)
+    partsUsed         Json?    // Array of parts used
+    toolsUsed         Json?    // Array of tools used
+    
+    // Issues and Notes
+    issuesEncountered Json?    // Array of issues encountered
+    progressNotes     String?  // Progress notes
+    updatedBy         String?  // User who updated progress
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    tenant            Tenant   @relation(fields: [tenantId], references: [id])
+    workOrder         WorkOrder @relation(fields: [workOrderId], references: [id])
+    
+    @@index([tenantId, workOrderId, progressDate]) // For progress tracking queries
+}
+
+
 
 // ========================================
 // EQUIPMENT RENTAL MANAGEMENT (JDE F4201-style)

@@ -175,7 +175,9 @@ async function main() {
     data: {
       tenantId: defaultTenant.id,
       code: 'EXC-001',
+      name: 'CAT 320D Excavator',
       type: 'Excavator',
+      category: 'Heavy Equipment',
       description: 'CAT 320D Excavator',
       currentSiteId: 'SITE-A',
       acquisitionCost: 500000.00,
@@ -188,7 +190,9 @@ async function main() {
     data: {
       tenantId: defaultTenant.id,
       code: 'BUL-001',
+      name: 'CAT D6T Bulldozer',
       type: 'Bulldozer',
+      category: 'Heavy Equipment',
       description: 'CAT D6T Bulldozer',
       currentSiteId: 'SITE-B',
       acquisitionCost: 400000.00,
@@ -201,7 +205,9 @@ async function main() {
     data: {
       tenantId: defaultTenant.id,
       code: 'LDR-001',
+      name: 'CAT 950M Loader',
       type: 'Loader',
+      category: 'Heavy Equipment',
       description: 'CAT 950M Loader',
       currentSiteId: 'SITE-A',
       acquisitionCost: 350000.00,
@@ -256,13 +262,16 @@ async function main() {
   await prisma.workOrder.create({
     data: {
       tenantId: defaultTenant.id,
+      workOrderNumber: 'WO-2024-001',
       equipmentId: excavator.id,
-      type: 'preventive',
-      status: 'planned',
+      workOrderType: 'PREVENTIVE',
+      priority: 'MEDIUM',
+      status: 'OPEN',
+      title: 'Monthly Preventive Maintenance',
+      description: 'Monthly preventive maintenance',
       scheduledDate: new Date('2024-02-01'),
       estimatedCost: 2500.00,
-      description: 'Monthly preventive maintenance',
-      assignedTo: managerUser.id
+      assignedTechnicianId: managerUser.id
     }
   });
 

@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
@@ -53,7 +53,7 @@ export function UsageLogging({ onSuccess }: UsageLoggingProps) {
     to: new Date(),
   });
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<UsageLogFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<UsageLogFormData>({
     resolver: zodResolver(usageLogSchema),
     defaultValues: {
       equipmentId: '',

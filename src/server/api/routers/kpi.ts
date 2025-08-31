@@ -84,7 +84,7 @@ export const kpiRouter = createTRPCRouter({
           };
         }
 
-        if (activity.type === "preventive") {
+        if ((activity as any).type === "preventive") {
           acc[key]!.planned++;
         }
         if (activity.status === "completed") {

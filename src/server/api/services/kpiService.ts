@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-inferrable-types, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/prefer-nullish-coalescing */
 
 import { prisma } from "@/lib/prisma";
-import { Decimal } from "@prisma/client/runtime/library";
+
 
 export interface KPIData {
   maintenanceActivity: {
@@ -48,7 +48,7 @@ export class KPIService {
       });
 
       // Calculate Maintenance Activity Ratio (MA/PA)
-      const plannedMaintenance = maintenanceActivities.filter(ma => ma.type === 'preventive').length;
+      const plannedMaintenance = maintenanceActivities.filter(ma => (ma as any).workOrderType === 'PREVENTIVE').length;
       const actualMaintenance = maintenanceActivities.filter(ma => ma.status === 'completed').length;
       const maintenanceRatio = plannedMaintenance > 0 ? (actualMaintenance / plannedMaintenance) * 100 : 0;
 
