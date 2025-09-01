@@ -426,16 +426,19 @@ export const coreRouter = router({
       );
 
       // Transform audit events to activities format
-      const activities = recentEvents.map((event: any) => ({
-        id: event.id,
-        type: event.action.toLowerCase().includes('order') ? 'order' : 
-              event.action.toLowerCase().includes('customer') ? 'crm' : 'system',
-        message: `${event.action}: ${event.entity} ${event.entityId}`,
-        time: new Date(event.createdAt).toLocaleString(),
-        status: event.action.toLowerCase().includes('create') ? 'info' :
-               event.action.toLowerCase().includes('update') ? 'success' :
-               event.action.toLowerCase().includes('delete') ? 'warning' : 'info'
-      }));
+      const activities = recentEvents.map((event: any) => {
+        const action = event.action as string;
+        return {
+          id: event.id,
+          type: action.toLowerCase().includes('order') ? 'order' : 
+                action.toLowerCase().includes('customer') ? 'crm' : 'system',
+          message: `${action}: ${event.entity} ${event.entityId}`,
+          time: new Date(event.createdAt).toLocaleString(),
+          status: action.toLowerCase().includes('create') ? 'info' :
+                 action.toLowerCase().includes('update') ? 'success' :
+                 action.toLowerCase().includes('delete') ? 'warning' : 'info'
+        };
+      });
 
       return { activities };
     }),
@@ -521,5 +524,45 @@ export const coreRouter = router({
           }
         ]
       };
+    }),
+
+  // List Customers
+  listCustomers: protectedProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(1000).default(50),
+      search: z.string().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const customers = await ctx.prisma.customer.findMany({
+          where: {
+            tenantId: ctx.tenantId,
+            ...(input.search && {
+              OR: [
+                { name: { contains: input.search, mode: 'insensitive' } },
+                { companyName: { contains: input.search, mode: 'insensitive' } },
+                { email: { contains: input.search, mode: 'insensitive' } },
+              ],
+            }),
+          },
+          take: input.limit,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            name: true,
+            companyName: true,
+            email: true,
+            phone: true,
+            status: true,
+            createdAt: true,
+          },
+        });
+
+        return { customers };
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+        // Return empty array if error occurs
+        return { customers: [] };
+      }
     }),
 });

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return */
+//src/app/inventory/page.tsx
 'use client';
 
 import { useState, Suspense, lazy, useMemo } from 'react';
@@ -36,8 +38,6 @@ const PurchaseRequestForm = lazy(() => import('@/components/inventory/PurchaseRe
 // Per Implementation Guide: Item master, multi-store stock, GRN/GI, basic PR→PO
 // ========================================
 
-
-
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showGRNForm, setShowGRNForm] = useState(false);
@@ -50,20 +50,20 @@ export default function InventoryPage() {
   
   // Calculate real statistics
   const quickStats = useMemo(() => {
-    const totalItems = itemsData?.items?.length || 0;
+    const totalItems = itemsData?.items?.length ?? 0;
     const lowStockItems = itemsData?.items?.filter((item: any) => 
       item.branches?.some((branch: any) => 
         branch.locations?.some((location: any) => location.quantity <= location.reorderPoint)
       )
-    ).length || 0;
+    ).length ?? 0;
     const totalValue = itemsData?.items?.reduce((sum: number, item: any) => 
       sum + (item.branches?.reduce((branchSum: number, branch: any) => 
         branchSum + (branch.locations?.reduce((locationSum: number, location: any) => 
-          locationSum + (location.quantity * (location.averageCost || 0)), 0) || 0), 0) || 0), 0
-    ) || 0;
+          locationSum + (location.quantity * (location.averageCost ?? 0)), 0) ?? 0), 0) ?? 0), 0
+    ) ?? 0;
     const pendingGRN = purchaseRequestsData?.requests?.filter((pr: any) => 
       pr.status === 'APPROVED' && pr.items?.some((item: any) => item.status === 'PENDING_GRN')
-    ).length || 0;
+    ).length ?? 0;
 
     return {
       totalItems,

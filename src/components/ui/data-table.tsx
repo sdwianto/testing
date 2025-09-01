@@ -162,7 +162,7 @@ function DataTable<T extends Record<string, unknown>>({
             <TableRow className="bg-muted">
               {columns.map((column, columnIndex) => (
                 <TableHead
-                  key={String(column.key) || `column-${columnIndex}`}
+                  key={`header-${columnIndex}-${String(column.key || column.label || 'unknown')}`}
                   className={cn(
                     "font-medium text-muted-foreground",
                     column.sortable && "cursor-pointer hover:bg-muted/50",
@@ -197,7 +197,7 @@ function DataTable<T extends Record<string, unknown>>({
                 <TableRow key={index} className="hover:bg-muted/50">
                   {columns.map((column, columnIndex) => (
                     <TableCell
-                      key={String(column.key) || `column-${columnIndex}`}
+                      key={`cell-${index}-${columnIndex}-${String(column.key || column.label || 'unknown')}`}
                       className={cn("py-4", column.className)}
                     >
                       {renderCell(column, row)}

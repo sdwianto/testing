@@ -646,7 +646,7 @@ export const rentalRouter = router({
       );
       const totalDuration = completedRentals.reduce((sum, rental) => {
         const start = new Date(rental.startDate);
-        const end = new Date(rental.endDate!);
+        const end = new Date(rental.endDate);
         const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
         return sum + duration;
       }, 0);

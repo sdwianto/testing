@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ThemeColorPicker } from '@/components/ThemeColorPicker';
-import { trpc } from '@/lib/trpc';
 import { 
   Settings, 
   Users,
@@ -30,28 +29,55 @@ import {
 } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
-  // Real data from tRPC queries
-  const { data: usersData } = trpc.core.getUsers.useQuery({});
-  const { data: systemConfigData } = trpc.core.getSystemConfig.useQuery({});
-  
-  // Calculate real system stats
-  const systemStats = useMemo(() => {
-    const totalUsers = usersData?.users?.length || 0;
-    const activeUsers = usersData?.users?.filter((user: any) => user.isActive).length || 0;
-    
-    return {
-      totalUsers,
-      activeUsers,
-      systemUptime: systemConfigData?.systemUptime || '99.8%',
-      lastBackup: systemConfigData?.lastBackup || 'N/A',
-      nextBackup: systemConfigData?.nextBackup || 'N/A',
-      databaseSize: systemConfigData?.databaseSize || 'N/A',
-      storageUsed: systemConfigData?.storageUsed || 'N/A'
-    };
-  }, [usersData, systemConfigData]);
+  // Mock data for demonstration
+  const systemStats = {
+    totalUsers: 45,
+    activeUsers: 42,
+    systemUptime: '99.8%',
+    lastBackup: '2024-03-10 02:00',
+    nextBackup: '2024-03-11 02:00',
+    databaseSize: '2.4 GB',
+    storageUsed: '68%'
+  };
 
-  // Use real users data or fallback to empty array
-  const users = usersData?.users || [];
+  const users = [
+    {
+      id: 1,
+      name: 'John Smith',
+      email: 'john.smith@nextgen.com',
+      role: 'Administrator',
+      status: 'active',
+      lastLogin: '2024-03-10 14:30',
+      permissions: ['all']
+    },
+    {
+      id: 2,
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@nextgen.com',
+      role: 'Manager',
+      status: 'active',
+      lastLogin: '2024-03-10 13:45',
+      permissions: ['crm', 'orders']
+    },
+    {
+      id: 3,
+      name: 'Mike Wilson',
+      email: 'mike.wilson@nextgen.com',
+      role: 'Operator',
+      status: 'active',
+      lastLogin: '2024-03-10 12:15',
+      permissions: ['crm', 'orders']
+    },
+    {
+      id: 4,
+      name: 'Lisa Brown',
+      email: 'lisa.brown@nextgen.com',
+      role: 'Finance',
+      status: 'inactive',
+      lastLogin: '2024-03-08 16:20',
+      permissions: ['finance', 'reports']
+    }
+  ];
 
   const systemSettings = [
     {

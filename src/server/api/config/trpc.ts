@@ -24,30 +24,68 @@ export const createTRPCContext = async (opts: CreateContextOptions) => {
     // Get session from NextAuth
     const session = await getServerSession(authOptions);
     
-    // Extract tenant from session or headers (R2 - tenant-scoped)
-    const tenantId = (session?.user as any)?.tenantId ?? req.headers.get('x-tenant-id') ?? 'CA-MINE';
+    // Extract tenant code from session or headers (R2 - tenant-scoped)
+    const tenantCode = (session?.user as any)?.tenantId ?? req.headers.get('x-tenant-id') ?? 'CA-MINE';
+    
+    // Look up tenant by code to get the actual UUID
+    const tenant = await prisma.tenant.findUnique({
+      where: { code: tenantCode },
+      select: { id: true, code: true, name: true }
+    });
+    
+    if (!tenant) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: `Tenant with code '${tenantCode}' not found`,
+      });
+    }
     
     return {
       session,
-      tenantId,
+      tenantId: tenant.id, // Use the actual UUID
+      tenantCode: tenant.code,
+      tenantName: tenant.name,
       userId: (session?.user as any)?.id ?? null,
       prisma,
       req,
     };
   } catch (error) {
     console.error('Error creating tRPC context:', error);
-    // Fallback context
-    return {
-      session: null,
-      tenantId: 'CA-MINE',
-      userId: null,
-      prisma,
-      req,
-    };
+    // Fallback context - try to get default tenant
+    try {
+      const defaultTenant = await prisma.tenant.findUnique({
+        where: { code: 'CA-MINE' },
+        select: { id: true, code: true, name: true }
+      });
+      
+      if (!defaultTenant) {
+        throw new Error('Default tenant CA-MINE not found');
+      }
+      
+      return {
+        session: null,
+        tenantId: defaultTenant.id,
+        tenantCode: defaultTenant.code,
+        tenantName: defaultTenant.name,
+        userId: null,
+        prisma,
+        req,
+      };
+    } catch (fallbackError) {
+      console.error('Fallback tenant lookup failed:', fallbackError);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Unable to determine tenant context',
+      });
+    }
   }
 };
 
-export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
+export type Context = Awaited<ReturnType<typeof createTRPCContext>> & {
+  tenantId: string;
+  tenantCode: string;
+  tenantName: string;
+};
 
 // ========================================
 // tRPC INITIALIZATION

@@ -18,15 +18,15 @@ export function ModernEquipmentTab() {
     <div className="space-y-6">
       <Tabs defaultValue="equipment-master" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="equipment-master" className="flex items-center gap-2">
+          <TabsTrigger value="equipment-master" data-tab="equipment-master" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             Equipment Master
           </TabsTrigger>
-          <TabsTrigger value="work-orders" className="flex items-center gap-2">
+          <TabsTrigger value="work-orders" data-tab="work-orders" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Work Orders
           </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center gap-2">
+          <TabsTrigger value="maintenance" data-tab="maintenance" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Maintenance
           </TabsTrigger>

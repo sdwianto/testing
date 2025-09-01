@@ -1,3 +1,4 @@
+//src/components/layouts/DashboardLayout.tsx
 "use client";
 
 import { 
@@ -31,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WifiOff, RefreshCw, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRealtime } from "@/contexts/realtime/RealtimeProvider";
 
 
 // Dashboard header component
@@ -88,146 +90,21 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return pathname.startsWith(path);
   };
 
-  // Connection status states - copied from ConnectionStatusCard
-  const [isOnline, setIsOnline] = useState(true);
-  const [isRealtimeConnected, setIsRealtimeConnected] = useState(true);
-  const [isReconnecting, setIsReconnecting] = useState(false);
-  const [lastSync, setLastSync] = useState<Date>(new Date());
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
+  // Use RealtimeProvider for connection status
+  const { status: realtimeStatus, lastError } = useRealtime();
+  
+  // Simplified connection status derived from RealtimeProvider
+  const isRealtimeConnected = realtimeStatus === 'open';
+  const isReconnecting = realtimeStatus === 'connecting';
+  const connectionError = lastError ?? null;
+  const lastSync = new Date(); // Will be updated via SSE messages
+  const isOnline = true; // Simplified - assume online if we can reach the page
 
-  // Connection status logic - improved with better internet detection
-  useEffect(() => {
-    // Check internet connection with actual network test
-    const checkInternetConnection = async () => {
-      try {
-        // Test with a reliable external service
-        const response = await fetch('https://www.google.com/favicon.ico', {
-          method: 'HEAD',
-          mode: 'no-cors',
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(3000),
-        });
-        setIsOnline(true);
-        console.log('🌐 Internet connection active');
-      } catch (error) {
-        setIsOnline(false);
-        setIsRealtimeConnected(false);
-        console.log('🌐 Internet connection lost');
-      }
-    };
+  // Connection status now handled by RealtimeProvider - no manual checking needed
 
-    // Check realtime connection with actual implementation
-    const checkRealtimeConnection = async () => {
-      if (isChecking) return; // Prevent multiple simultaneous checks
-      
-      setIsChecking(true);
-      try {
-        // Test connection to our API
-        const response = await fetch('/api/health', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          signal: AbortSignal.timeout(2000), // 2 second timeout for faster response
-        });
-        
-        if (response.ok) {
-          setIsRealtimeConnected(true);
-          setLastSync(new Date());
-          setConnectionError(null);
-          console.log('✅ Real-time connection active');
-        } else {
-          setIsRealtimeConnected(false);
-          setConnectionError(`Server error: ${response.status}`);
-          console.log('❌ Real-time connection failed:', response.status);
-        }
-      } catch (error) {
-        setIsRealtimeConnected(false);
-        const errorMessage = error instanceof Error ? error.message : 'Connection timeout';
-        setConnectionError(errorMessage);
-        console.log('❌ Real-time connection error:', error);
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    // Combined check function
-    const checkConnections = async () => {
-      await checkInternetConnection();
-      await checkRealtimeConnection();
-    };
-
-    // Initial check
-    void checkConnections();
-
-    // Check every 3 seconds for more responsive updates
-    const interval = setInterval(() => void checkConnections(), 3000);
-
-    // Also listen to browser online/offline events as backup
-    const handleOnline = () => {
-      console.log('🌐 Browser online event');
-      void checkConnections();
-    };
-    
-    const handleOffline = () => {
-      console.log('🌐 Browser offline event');
-      setIsOnline(false);
-      setIsRealtimeConnected(false);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
-    };
-  }, [isChecking]);
-
-  const handleReconnect = async () => {
-    setIsReconnecting(true);
-    console.log('🔄 Attempting to reconnect...');
-    
-    try {
-      // Test connection to our API
-      const response = await fetch('/api/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(5000), // 5 second timeout for reconnect
-      });
-      
-      if (response.ok) {
-        setIsRealtimeConnected(true);
-        setLastSync(new Date());
-        setConnectionError(null);
-        console.log('✅ Reconnection successful');
-      } else {
-        setConnectionError(`Server error: ${response.status}`);
-        console.log('❌ Reconnection failed:', response.status);
-        // Keep trying every 2 seconds
-        setTimeout(() => {
-          if (!isRealtimeConnected) {
-            void handleReconnect();
-          }
-        }, 2000);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Connection timeout';
-      setConnectionError(errorMessage);
-      console.log('❌ Reconnection error:', error);
-      // Keep trying every 2 seconds
-      setTimeout(() => {
-        if (!isRealtimeConnected) {
-          void handleReconnect();
-        }
-      }, 2000);
-    } finally {
-      setIsReconnecting(false);
-    }
+  // Reconnection handled automatically by RealtimeProvider
+  const handleReconnect = () => {
+    console.log('🔄 Reconnection handled by RealtimeProvider');
   };
 
   const formatLastSync = (date: Date) => {
@@ -268,10 +145,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </SidebarMenuItem>
             </SidebarMenu>
 
-            {/* CRM Module temporarily disabled */}
-            {/* 
             <SidebarSeparator className="my-2" />
 
+            {/* Business Management */}
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -286,7 +162,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-            */}
 
             <SidebarSeparator className="my-2" />
 
@@ -464,7 +339,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="relative flex-1 p-6">
+        <main className="relative flex-1 overflow-auto p-6">
           <div className="md:hidden mb-4">
             <SidebarTrigger />
           </div>

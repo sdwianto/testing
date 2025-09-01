@@ -113,7 +113,7 @@ export const operationsRouter = router({
       idempotencyKey: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { ...data } = input;
+      const { idempotencyKey, ...data } = input;
       
       // Check if equipment code already exists
       const existing = await ctx.prisma.equipment.findFirst({
@@ -652,7 +652,7 @@ export const operationsRouter = router({
       idempotencyKey: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { ...data } = input;
+      const { idempotencyKey, ...data } = input;
       
       // Generate work order number
       // const count = await ctx.prisma.workOrder.count({
@@ -697,7 +697,7 @@ export const operationsRouter = router({
       idempotencyKey: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
+      const { id, idempotencyKey, ...data } = input;
       
       const workOrder = await ctx.prisma.workOrder.update({
         where: {
@@ -807,7 +807,7 @@ export const operationsRouter = router({
       idempotencyKey: z.string().uuid(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { ...data } = input;
+      const { idempotencyKey, ...data } = input;
       
       const schedule = await (ctx.prisma as any).maintenanceSchedule.create({
         data: {
@@ -982,26 +982,49 @@ export const operationsRouter = router({
         sum + Number(eq.usageLogs.reduce((logSum, log) => logSum + Number(log.hoursUsed), 0)), 0
       );
       
-      const avgUtilization = equipment.length > 0 ? 75 : 0; // Default utilization rate
+      // Calculate real utilization and availability rates
+      const totalPossibleHours = equipment.length * timeRange * 24; // Assuming 24-hour operation
+      const actualUtilization = totalPossibleHours > 0 ? (totalHours / totalPossibleHours) * 100 : 0;
       
-      const avgAvailability = equipment.length > 0 ? 85 : 0; // Default availability rate
+      // Calculate availability based on work orders and downtime
+      const totalDowntime = equipment.reduce((sum, eq) => {
+        const downtimeWorkOrders = eq.workOrders.filter(wo => 
+          wo.status === 'IN_PROGRESS' || wo.status === 'COMPLETED'
+        );
+        return sum + downtimeWorkOrders.reduce((woSum, wo) => 
+          woSum + (wo.estimatedDuration || 0), 0
+        );
+      }, 0);
       
-      const equipmentPerformance = equipment.map(eq => ({
-        equipmentId: eq.id,
-        equipment: eq,
-        utilizationRate: 75, // Default utilization rate
-        availabilityRate: 85, // Default availability rate
-        totalHours: Number(eq.usageLogs.reduce((sum, log) => sum + Number(log.hoursUsed), 0)),
-        performanceStatus: 75 >= 80 ? 'EXCELLENT' : 
-                          75 >= 60 ? 'GOOD' : 
-                          75 >= 40 ? 'FAIR' : 'POOR',
-      }));
+      const totalPossibleTime = equipment.length * timeRange * 24;
+      const actualAvailability = totalPossibleTime > 0 ? 
+        ((totalPossibleTime - totalDowntime) / totalPossibleTime) * 100 : 100;
+      
+      const equipmentPerformance = equipment.map(eq => {
+        const eqHours = Number(eq.usageLogs.reduce((sum, log) => sum + Number(log.hoursUsed), 0));
+        const eqUtilization = totalPossibleHours > 0 ? (eqHours / (timeRange * 24)) * 100 : 0;
+        const eqDowntime = eq.workOrders.filter(wo => 
+          wo.status === 'IN_PROGRESS' || wo.status === 'COMPLETED'
+        ).reduce((sum, wo) => sum + (wo.estimatedDuration || 0), 0);
+        const eqAvailability = ((timeRange * 24) - eqDowntime) / (timeRange * 24) * 100;
+        
+        return {
+          equipmentId: eq.id,
+          equipment: eq,
+          utilizationRate: Math.round(eqUtilization * 100) / 100,
+          availabilityRate: Math.round(eqAvailability * 100) / 100,
+          totalHours: eqHours,
+          performanceStatus: eqUtilization >= 80 ? 'EXCELLENT' : 
+                            eqUtilization >= 60 ? 'GOOD' : 
+                            eqUtilization >= 40 ? 'FAIR' : 'POOR',
+        };
+      });
       
       return {
         equipmentCount: totalEquipment,
         totalOperatingHours: totalHours,
-        averageUtilization: avgUtilization,
-        averageAvailability: avgAvailability,
+        averageUtilization: Math.round(actualUtilization * 100) / 100,
+        averageAvailability: Math.round(actualAvailability * 100) / 100,
         equipmentPerformance,
       };
     }),
@@ -1034,9 +1057,18 @@ export const operationsRouter = router({
         sum + Number(wo.actualCost || wo.estimatedCost || 0), 0
       );
       
-      const averageMTTR = completedWorkOrders.length > 0 ? 4 : 0; // Default MTTR in hours
+      // Calculate real MTTR (Mean Time To Repair)
+      const totalRepairTime = completedWorkOrders.reduce((sum, wo) => 
+        sum + (wo.estimatedDuration || 0), 0
+      );
+      const averageMTTR = completedWorkOrders.length > 0 ? 
+        totalRepairTime / completedWorkOrders.length : 0;
       
-      const averageMTBF = completedWorkOrders.length > 0 ? 168 : 0; // Default MTBF in hours (1 week)
+      // Calculate real MTBF (Mean Time Between Failures)
+      // This is a simplified calculation - in real scenarios you'd need failure history
+      const totalOperatingTime = timeRange * 24; // Total hours in time range
+      const failureCount = completedWorkOrders.length;
+      const averageMTBF = failureCount > 0 ? totalOperatingTime / failureCount : totalOperatingTime;
       
       return {
         totalMaintenanceCost,

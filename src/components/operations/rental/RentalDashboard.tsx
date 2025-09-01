@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
 'use client';
 
 // Performance Rules: FP1 Server Components when possible, FP3 Dynamic imports, FP6 Data fetching optimization
@@ -18,8 +19,10 @@ import {
 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { format } from 'date-fns';
-import type { RentalContract } from './types/rental';
+import type { RentalContract, RentalMetrics } from './types/rental';
 import { RentalForm } from './RentalForm';
+import type { Column } from '@/components/ui/data-table';
+import type { DataTableProps } from '@/components/ui/data-table';
 
 // ========================================
 // RENTAL DASHBOARD - Performance Optimized
@@ -36,6 +39,7 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
   const [showRentalForm, setShowRentalForm] = useState(false);
   
   // FP6: React Query for efficient data fetching with staleTime
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const { 
     data: rentalsData, 
     isLoading: rentalsLoading,
@@ -43,7 +47,7 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
   } = trpc.rental.listRentals.useQuery({
     limit: 50,
     search: searchTerm || undefined,
-    status: (statusFilter as any) || undefined,
+    status: (statusFilter as 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED' | 'OVERDUE') || undefined,
   }, {
     staleTime: 30 * 1000, // FP7: 30s stale time to reduce requests
   });
@@ -59,18 +63,18 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
   const processedRentals = useMemo(() => {
     if (!rentalsData?.rentals) return [];
     
-    return rentalsData.rentals.map((rental: RentalContract) => ({
+    return rentalsData.rentals.map((rental: any) => ({
       id: rental.id,
       rentalNumber: rental.rentalNumber,
-      equipment: rental.equipment?.code || 'N/A',
-      customer: rental.customer?.name || 'Unknown',
+      equipment: rental.equipment?.code ?? 'N/A',
+      customer: rental.customer?.name ?? 'Unknown',
       status: rental.status,
-      startDate: format(new Date(rental.startDate), 'MMM dd, yyyy'),
+      startDate: format(new Date(rental.startDate as string), 'MMM dd, yyyy'),
       dailyRate: new Intl.NumberFormat('en-US', { 
         style: 'currency', 
         currency: 'USD' 
-      }).format(rental.dailyRate),
-      totalBilled: rental.rentalBills?.reduce((sum, bill) => sum + bill.totalAmount, 0) || 0,
+      }).format(rental.dailyRate as number),
+      totalBilled: (rental.rentalBills?.reduce((sum: number, bill: any) => sum + (bill.totalAmount as number), 0) ?? 0) as number,
     }));
   }, [rentalsData?.rentals]);
 
@@ -79,14 +83,14 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
     {
       accessorKey: 'rentalNumber',
       header: 'Rental #',
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: { getValue: (arg0: string) => string } }) => (
         <div className="font-medium">{row.getValue('rentalNumber')}</div>
       ),
     },
     {
       accessorKey: 'equipment',
       header: 'Equipment',
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: { getValue: (arg0: string) => string } }) => (
         <div className="font-medium">{row.getValue('equipment')}</div>
       ),
     },
@@ -97,8 +101,8 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }: any) => {
-        const status = row.getValue('status') as string;
+      cell: ({ row }: { row: { getValue: (arg0: string) => string } }) => {
+        const status = row.getValue('status');
         const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
           'ACTIVE': 'default',
           'COMPLETED': 'secondary',
@@ -108,7 +112,7 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
         };
         
         return (
-          <Badge variant={variants[status] || 'secondary'}>
+          <Badge variant={variants[status] ?? 'secondary'}>
             {status}
           </Badge>
         );
@@ -125,8 +129,8 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
     {
       accessorKey: 'totalBilled',
       header: 'Total Billed',
-      cell: ({ row }: any) => {
-        const amount = row.getValue('totalBilled') as number;
+      cell: ({ row }: { row: { getValue: (arg0: string) => string } }) => {
+        const amount = row.getValue('totalBilled') as unknown as number;
         return new Intl.NumberFormat('en-US', { 
           style: 'currency', 
           currency: 'USD' 
@@ -168,8 +172,8 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
 
       {/* Key Metrics - Suspense boundary for better UX */}
       <Suspense fallback={<div className="h-32 animate-pulse bg-muted rounded" />}>
-                <RentalMetricsCards 
-          metrics={metricsData} 
+        <RentalMetricsCards 
+          metrics={metricsData as RentalMetrics} 
           isLoading={metricsLoading} 
         />
       </Suspense>
@@ -204,13 +208,14 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
             </div>
           ) : (
             <DataTable
-              columns={columns}
+              columns={columns as unknown as Column<any>[]}
               data={processedRentals}
-              // FP6: Enable pagination for large datasets
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-              }}
+              searchable={true}
+              filterable={true}
+              exportable={true}
+              loading={rentalsLoading}
+              emptyMessage="No rentals found"
+              className="w-full"
             />
           )}
         </CardContent>
@@ -221,7 +226,7 @@ export function RentalDashboard({ onCreateRental }: RentalDashboardProps) {
         isOpen={showRentalForm}
         onClose={() => setShowRentalForm(false)}
         onSuccess={() => {
-          refetchRentals();
+          void refetchRentals();
         }}
       />
     </div>

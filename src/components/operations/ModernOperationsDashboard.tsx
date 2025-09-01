@@ -98,9 +98,12 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
     const activeRentals = rentalData.rentals?.filter((r: any) => r.status === 'ACTIVE').length || 0;
     const completedRentals = rentalData.rentals?.filter((r: any) => r.status === 'COMPLETED').length || 0;
     const overdueRentals = rentalData.rentals?.filter((r: any) => r.status === 'OVERDUE').length || 0;
-    const totalRentalRevenue = rentalData.rentals?.reduce((sum: number, r: any) => 
-      sum + (r.rentalBills?.reduce((billSum: number, bill: any) => billSum + bill.totalAmount, 0) || 0), 0
-    ) || 0;
+    const totalRentalRevenue = rentalData.rentals?.reduce((sum: number, r: any) => {
+      const rentalBillsTotal = (r.rentalBills?.reduce((billSum: number, bill: any) => {
+        return billSum + (bill.totalAmount as number);
+      }, 0) || 0) as number;
+      return sum + rentalBillsTotal;
+    }, 0) || 0;
 
     return {
       totalEquipment,

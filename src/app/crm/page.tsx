@@ -22,7 +22,7 @@ export default function CRMPage() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Customer Relationship Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage customers, leads, and sales opportunities</p>
           </div>
-        </div>
+                  </div>
 
         {/* Module Disabled Message */}
         <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
@@ -37,7 +37,7 @@ export default function CRMPage() {
                   The Customer Relationship Management module is currently under maintenance and has been temporarily disabled. 
                   Please check back later or contact your system administrator for more information.
                 </p>
-              </div>
+        </div>
             </div>
           </CardContent>
         </Card>
@@ -59,11 +59,11 @@ export default function CRMPage() {
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">Operations</Badge>
                   <span className="text-sm">Equipment rental customers</span>
-                </div>
+                        </div>
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">Inventory</Badge>
                   <span className="text-sm">Purchase order suppliers</span>
-                </div>
+                        </div>
               </div>
             </CardContent>
           </Card>

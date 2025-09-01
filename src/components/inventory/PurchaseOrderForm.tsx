@@ -83,7 +83,7 @@ export function PurchaseOrderForm({ onSuccess, onCancel }: PurchaseOrderFormProp
   };
 
   // Get selected PR details
-  const selectedPR = purchaseRequests?.purchaseRequests?.find((pr: unknown) => (pr as { id: string }).id === watch('prId'));
+  const selectedPR = purchaseRequests?.requests?.find((pr: unknown) => (pr as { id: string }).id === watch('prId'));
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -106,9 +106,9 @@ export function PurchaseOrderForm({ onSuccess, onCancel }: PurchaseOrderFormProp
                 <SelectValue placeholder="Select Purchase Request" />
               </SelectTrigger>
               <SelectContent>
-                {purchaseRequests?.purchaseRequests?.map((pr: unknown) => (
+                {purchaseRequests?.requests?.map((pr: unknown) => (
                   <SelectItem key={(pr as { id: string }).id} value={(pr as { id: string }).id}>
-                    {(pr as { prNumber: string }).prNumber} - {(pr as { title: string }).title} (${(pr as { totalAmount: number }).totalAmount.toFixed(2)})
+                    {(pr as { title: string }).title} (${(pr as { totalPrice: string }).totalPrice})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -124,23 +124,20 @@ export function PurchaseOrderForm({ onSuccess, onCancel }: PurchaseOrderFormProp
               <h3 className="font-medium mb-2">Purchase Request Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium">PR Number:</span> {selectedPR.prNumber}
-                </div>
-                <div>
                   <span className="font-medium">Title:</span> {selectedPR.title}
                 </div>
                 <div>
-                  <span className="font-medium">Priority:</span> {selectedPR.priority}
+                  <span className="font-medium">Status:</span> {selectedPR.status}
                 </div>
                 <div>
-                  <span className="font-medium">Total Amount:</span> ${parseFloat(selectedPR.totalAmount).toFixed(2)}
+                  <span className="font-medium">Total Amount:</span> ${selectedPR.items?.reduce((sum: number, item: any) => sum + parseFloat(item.totalPrice), 0).toFixed(2) || '0.00'}
                 </div>
                 <div>
-                  <span className="font-medium">Requested By:</span> {selectedPR.requestedBy}
+                  <span className="font-medium">Created:</span> {new Date(selectedPR.createdAt).toLocaleDateString()}
                 </div>
-                <div>
-                  <span className="font-medium">Department:</span> {selectedPR.departmentId}
-                </div>
+                                  <div>
+                    <span className="font-medium">Department:</span> {selectedPR.departmentId ?? 'N/A'}
+                  </div>
               </div>
               
               {/* PR Items - Mock data for now */}

@@ -11,6 +11,8 @@ export const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379'
   maxRetriesPerRequest: 3,
   lazyConnect: true,
   enableReadyCheck: false,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
 });
 
 // Redis Pub/Sub client for real-time fan-out
@@ -18,6 +20,8 @@ export const redisPubSub = new Redis(process.env.REDIS_URL ?? 'redis://localhost
   maxRetriesPerRequest: 3,
   lazyConnect: true,
   enableReadyCheck: false,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
 });
 
 // Redis Streams client for replay and consumer groups
@@ -25,6 +29,33 @@ export const redisStreams = new Redis(process.env.REDIS_URL ?? 'redis://localhos
   maxRetriesPerRequest: 3,
   lazyConnect: true,
   enableReadyCheck: false,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
+});
+
+// Add connection event handlers
+redis.on('error', (error) => {
+  console.error('Redis client error:', error);
+});
+
+redis.on('connect', () => {
+  console.log('✅ Redis client connected');
+});
+
+redisPubSub.on('error', (error) => {
+  console.error('Redis Pub/Sub client error:', error);
+});
+
+redisPubSub.on('connect', () => {
+  console.log('✅ Redis Pub/Sub client connected');
+});
+
+redisStreams.on('error', (error) => {
+  console.error('Redis Streams client error:', error);
+});
+
+redisStreams.on('connect', () => {
+  console.log('✅ Redis Streams client connected');
 });
 
 // ========================================
@@ -52,7 +83,7 @@ export interface StreamMessage {
 // ========================================
 
 export class RedisStreams {
-  private redis: Redis;
+  public redis: Redis;
 
   constructor(redisInstance: Redis) {
     this.redis = redisInstance;
@@ -64,6 +95,11 @@ export class RedisStreams {
     nextCursor: string;
   }> {
     try {
+      // Check if Redis is connected
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       const results = await this.redis.xread('COUNT', count, 'STREAMS', streamKey, cursor);
       
       if (!results || results.length === 0) {
@@ -108,6 +144,10 @@ export class RedisStreams {
   // Get latest cursor for stream
   async getLatestCursor(streamKey: string): Promise<string> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       const info = await this.redis.xinfo('STREAM', streamKey) as any[];
       if (info && info.length > 0) {
         return info[1] as string; // Last entry ID
@@ -122,6 +162,10 @@ export class RedisStreams {
   // Publish event to stream (per Implementation Guide format)
   async publishEvent(streamKey: string, event: EventEnvelope): Promise<string> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       const fields = [
         'tenantId', event.tenantId,
         'type', event.type,
@@ -143,6 +187,10 @@ export class RedisStreams {
   // Create consumer group for reliable processing
   async createConsumerGroup(streamKey: string, groupName: string, startId: string = '0'): Promise<void> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       await this.redis.xgroup('CREATE', streamKey, groupName, startId, 'MKSTREAM');
     } catch (error) {
       // Group might already exist, ignore error
@@ -160,6 +208,10 @@ export class RedisStreams {
     count: number = 10
   ): Promise<StreamMessage[]> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       const results = await this.redis.xreadgroup(
         'GROUP', groupName, consumerName,
         'COUNT', count,
@@ -184,6 +236,10 @@ export class RedisStreams {
   // Acknowledge message processing
   async acknowledgeMessage(streamKey: string, groupName: string, messageId: string): Promise<void> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       await this.redis.xack(streamKey, groupName, messageId);
     } catch (error) {
       console.error('Failed to acknowledge message:', error);
@@ -193,6 +249,10 @@ export class RedisStreams {
   // Get stream info
   async getStreamInfo(streamKey: string): Promise<any> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       return await this.redis.xinfo('STREAM', streamKey);
     } catch (error) {
       console.error('Failed to get stream info:', error);
@@ -215,6 +275,10 @@ export class RedisPubSub {
   // Publish to tenant-specific channel
   async publishToTenant(tenantId: string, event: EventEnvelope): Promise<void> {
     try {
+      if (this.redis.status !== 'ready') {
+        throw new Error('Redis not connected');
+      }
+
       const channel = `tenant:${tenantId}:pub`;
       await this.redis.publish(channel, JSON.stringify(event));
     } catch (error) {
@@ -226,7 +290,13 @@ export class RedisPubSub {
   async subscribeToTenant(tenantId: string, callback: (event: EventEnvelope) => void): Promise<() => void> {
     try {
       const channel = `tenant:${tenantId}:pub`;
-      const subscriber = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
+      const subscriber = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
+        maxRetriesPerRequest: 3,
+        lazyConnect: true,
+        enableReadyCheck: false,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+      });
       
       await subscriber.subscribe(channel);
       
@@ -237,6 +307,10 @@ export class RedisPubSub {
         } catch (error) {
           console.error('Failed to parse pub/sub message:', error);
         }
+      });
+
+      subscriber.on('error', (error) => {
+        console.error('Redis subscriber error:', error);
       });
 
       return () => {
