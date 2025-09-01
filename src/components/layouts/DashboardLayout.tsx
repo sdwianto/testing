@@ -268,9 +268,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </SidebarMenuItem>
             </SidebarMenu>
 
+            {/* CRM Module temporarily disabled */}
+            {/* 
             <SidebarSeparator className="my-2" />
 
-            {/* Business Management */}
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -285,6 +286,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
+            */}
 
             <SidebarSeparator className="my-2" />
 
