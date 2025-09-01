@@ -54,16 +54,16 @@ export function GRNForm({ onSuccess, onCancel }: GRNFormProps) {
   const watchedItems = watch('items');
 
   // tRPC queries
-  const { data: items } = trpc.inv.listItems.useQuery({
+  const { data: items } = trpc.inventory.listItems.useQuery({
     limit: 100,
     search: '',
   });
 
-  const { data: locations } = trpc.inv.listLocations.useQuery({
+  const { data: locations } = trpc.inventory.listLocations.useQuery({
     limit: 100,
   });
 
-  const createGRN = trpc.inv.createInventoryTx.useMutation({
+  const createGRN = trpc.inventory.createInventoryTx.useMutation({
     onSuccess: () => {
       toast.success('GRN created successfully');
       reset();

@@ -58,7 +58,7 @@ export function PurchaseRequestForm({ onSuccess, onCancel }: PurchaseRequestForm
   const watchedItems = watch('items');
 
   // tRPC queries
-  const { data: items } = trpc.inv.listItems.useQuery({
+  const { data: items } = trpc.inventory.listItems.useQuery({
     limit: 100,
     search: '',
   });

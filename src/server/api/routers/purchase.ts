@@ -19,7 +19,7 @@ export const purchaseRouter = router({
   listPurchaseRequests: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       status: z.string().optional(),
       priority: z.string().optional(),
       search: z.string().optional(),
@@ -402,7 +402,7 @@ export const purchaseRouter = router({
   listPurchaseOrders: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       status: z.string().optional(),
       search: z.string().optional(),
     }))

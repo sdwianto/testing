@@ -72,7 +72,7 @@ export function ItemMaster({ onSuccess }: ItemMasterProps) {
   }, [searchTerm]);
 
   // tRPC queries with cursor pagination (R1: keyset pagination)
-  const { data: items, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = trpc.inv.listItems.useInfiniteQuery(
+  const { data: items, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = trpc.inventory.listItems.useInfiniteQuery(
     {
       limit: 50, // FP6: cursor pagination for large lists
       type: typeFilter === 'all' ? undefined : typeFilter,
@@ -85,7 +85,7 @@ export function ItemMaster({ onSuccess }: ItemMasterProps) {
     }
   );
 
-  const createItem = trpc.inv.createItem.useMutation({
+  const createItem = trpc.inventory.createItem.useMutation({
     onSuccess: () => {
       toast.success('Item created successfully');
       reset();
@@ -98,7 +98,7 @@ export function ItemMaster({ onSuccess }: ItemMasterProps) {
     },
   });
 
-  const updateItem = trpc.inv.updateItem.useMutation({
+  const updateItem = trpc.inventory.updateItem.useMutation({
     onSuccess: () => {
       toast.success('Item updated successfully');
       reset();
@@ -112,7 +112,7 @@ export function ItemMaster({ onSuccess }: ItemMasterProps) {
     },
   });
 
-  const deleteItem = trpc.inv.deleteItem.useMutation({
+  const deleteItem = trpc.inventory.deleteItem.useMutation({
     onSuccess: () => {
       toast.success('Item deleted successfully');
       void refetch();

@@ -14,7 +14,7 @@ import { rentalRouter } from './routers/rental';
 
 export const appRouter = router({
   ops: operationsRouter,
-  inv: inventoryRouter,
+  inventory: inventoryRouter,
   core: coreRouter,
   purchase: purchaseRouter,
   kpi: kpiRouter,

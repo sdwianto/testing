@@ -596,7 +596,7 @@ export const operationsRouter = router({
   listWorkOrders: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       type: z.string().optional(),
       status: z.string().optional(),
       priority: z.string().optional(),
@@ -755,7 +755,7 @@ export const operationsRouter = router({
   listMaintenanceSchedules: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       type: z.string().optional(),
       equipmentId: z.string().optional(),
       search: z.string().optional(),

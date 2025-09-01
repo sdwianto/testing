@@ -39,18 +39,18 @@ export function InventoryDashboard({ onSuccess }: InventoryDashboardProps) {
   });
 
   // tRPC queries
-  const { data: stockLevels, isLoading: stockLoading, refetch: refetchStock } = trpc.inv.getStockLevels.useQuery({});
+  const { data: stockLevels, isLoading: stockLoading, refetch: refetchStock } = trpc.inventory.getStockLevels.useQuery({});
   
-  const { data: inventoryTxs, isLoading: txLoading } = trpc.inv.getInventoryTransactions.useQuery({
+  const { data: inventoryTxs, isLoading: txLoading } = trpc.inventory.getInventoryTransactions.useQuery({
     from: dateRange.from.toISOString(),
     to: dateRange.to.toISOString(),
   });
 
-  const { data: lowStockItems } = trpc.inv.getLowStockItems.useQuery({
+  const { data: lowStockItems } = trpc.inventory.getLowStockItems.useQuery({
     threshold: 10,
   });
 
-  const { data: topItems } = trpc.inv.getTopMovingItems.useQuery({
+  const { data: topItems } = trpc.inventory.getTopMovingItems.useQuery({
     from: dateRange.from.toISOString(),
     to: dateRange.to.toISOString(),
     limit: 10,

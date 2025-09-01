@@ -53,16 +53,16 @@ export function GIForm({ onSuccess, onCancel }: GIFormProps) {
   const watchedItems = watch('items');
 
   // tRPC queries
-  const { data: items } = trpc.inv.listItems.useQuery({
+  const { data: items } = trpc.inventory.listItems.useQuery({
     limit: 100,
     search: '',
   });
 
-  const { data: locations } = trpc.inv.listLocations.useQuery({
+  const { data: locations } = trpc.inventory.listLocations.useQuery({
     limit: 100,
   });
 
-  const createGI = trpc.inv.createInventoryTx.useMutation({
+  const createGI = trpc.inventory.createInventoryTx.useMutation({
     onSuccess: () => {
       toast.success('GI created successfully');
       reset();

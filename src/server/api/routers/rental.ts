@@ -19,7 +19,7 @@ export const rentalRouter = router({
   listRentals: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED', 'SUSPENDED', 'OVERDUE']).optional(),
       customerId: z.string().optional(),
       equipmentId: z.string().optional(),
@@ -538,7 +538,7 @@ export const rentalRouter = router({
     .input(z.object({
       rentalId: z.string(),
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
     }))
     .query(async ({ ctx, input }) => {
       const { rentalId, cursor, limit } = input;

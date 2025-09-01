@@ -32,13 +32,13 @@ export function StockManagement({ onSuccess }: StockManagementProps) {
   const [lowStockFilter, setLowStockFilter] = useState<boolean>(false);
 
   // tRPC queries
-  const { data: stockLevels, isLoading } = trpc.inv.getStockLevels.useQuery({
+  const { data: stockLevels, isLoading } = trpc.inventory.getStockLevels.useQuery({
     siteId: siteFilter === 'all' ? undefined : siteFilter,
   });
 
   const { data: sites } = trpc.core.getSites.useQuery();
 
-  const { data: lowStockItems } = trpc.inv.getLowStockItems.useQuery({
+  const { data: lowStockItems } = trpc.inventory.getLowStockItems.useQuery({
     threshold: 10, // Items with stock below 10
   });
 

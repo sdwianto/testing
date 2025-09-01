@@ -415,7 +415,7 @@ export const coreRouter = router({
   // Recent Activities for Dashboard
   getRecentActivities: protectedProcedure
     .input(z.object({
-      limit: z.number().min(1).max(100).default(10),
+      limit: z.number().min(1).max(1000).default(10),
     }))
     .query(async ({ ctx, input }) => {
       // Get recent audit events as activities

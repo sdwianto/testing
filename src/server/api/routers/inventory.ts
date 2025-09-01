@@ -16,7 +16,7 @@ export const inventoryRouter = router({
   listItems: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       type: z.string().optional(),
       search: z.string().optional(),
     }))
@@ -442,7 +442,7 @@ export const inventoryRouter = router({
   listLocations: protectedProcedure
     .input(z.object({
       cursor: z.string().optional(),
-      limit: z.number().min(1).max(100).default(50),
+      limit: z.number().min(1).max(1000).default(50),
       search: z.string().optional(),
     }))
     .query(async ({ ctx, input }) => {
@@ -599,7 +599,7 @@ export const inventoryRouter = router({
     .input(z.object({
       from: z.string().datetime(),
       to: z.string().datetime(),
-      limit: z.number().min(1).max(100).default(10),
+      limit: z.number().min(1).max(1000).default(10),
     }))
     .query(async ({ ctx, input }) => {
       const { from, to, limit } = input;
