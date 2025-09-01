@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { trpc } from '@/lib/trpc';
 import { 
   Cloud, 
   Wifi, 
@@ -29,112 +30,35 @@ import {
 } from 'lucide-react';
 
 const OfflineSyncPage: React.FC = () => {
-  // Mock data for offline sync
-  const syncStats = {
-    totalDevices: 12,
-    onlineDevices: 8,
-    offlineDevices: 4,
-    pendingSync: 156,
-    syncedToday: 1247,
-    conflicts: 3
-  };
+  // Real data from tRPC queries
+  const { data: syncData } = trpc.core.getSyncStatus.useQuery({});
+  const { data: devicesData } = trpc.core.getDevices.useQuery({});
+  const { data: syncQueueData } = trpc.core.getSyncQueue.useQuery({});
+  
+  // Calculate real sync stats
+  const syncStats = useMemo(() => {
+    const totalDevices = devicesData?.devices?.length || 0;
+    const onlineDevices = devicesData?.devices?.filter((device: any) => device.status === 'Online').length || 0;
+    const offlineDevices = totalDevices - onlineDevices;
+    const pendingSync = syncQueueData?.queue?.filter((item: any) => item.status === 'Pending').length || 0;
+    const syncedToday = syncData?.syncedToday || 0;
+    const conflicts = syncData?.conflicts || 0;
 
-  const devices = [
-    {
-      id: 1,
-      name: 'Port Moresby Office',
-      type: 'Desktop',
-      status: 'Online',
-      lastSync: '2024-01-15 10:30',
-      pendingRecords: 0,
-      syncProgress: 100,
-      location: 'Port Moresby',
-      ip: '192.168.1.100'
-    },
-    {
-      id: 2,
-      name: 'Lae Warehouse',
-      type: 'Desktop',
-      status: 'Online',
-      lastSync: '2024-01-15 10:25',
-      pendingRecords: 0,
-      syncProgress: 100,
-      location: 'Lae',
-      ip: '192.168.1.101'
-    },
-    {
-      id: 3,
-      name: 'Mount Hagen Site',
-      type: 'Tablet',
-      status: 'Offline',
-      lastSync: '2024-01-15 08:15',
-      pendingRecords: 45,
-      syncProgress: 0,
-      location: 'Mount Hagen',
-      ip: '192.168.1.102'
-    },
-    {
-      id: 4,
-      name: 'Goroka Field Office',
-      type: 'Mobile',
-      status: 'Offline',
-      lastSync: '2024-01-15 07:30',
-      pendingRecords: 23,
-      syncProgress: 0,
-      location: 'Goroka',
-      ip: '192.168.1.103'
-    },
-    {
-      id: 5,
-      name: 'Madang Branch',
-      type: 'Desktop',
-      status: 'Online',
-      lastSync: '2024-01-15 10:20',
-      pendingRecords: 0,
-      syncProgress: 100,
-      location: 'Madang',
-      ip: '192.168.1.104'
-    }
-  ];
+    return {
+      totalDevices,
+      onlineDevices,
+      offlineDevices,
+      pendingSync,
+      syncedToday,
+      conflicts
+    };
+  }, [devicesData, syncQueueData, syncData]);
 
-  const syncQueue = [
-    {
-      id: 1,
-      type: 'Customer Data Update',
-      device: 'Mount Hagen Site',
-      records: 45,
-      status: 'Pending',
-      timestamp: '2024-01-15 08:15',
-      priority: 'High'
-    },
-    {
-      id: 2,
-      type: 'Customer Data',
-      device: 'Goroka Field Office',
-      records: 23,
-      status: 'Pending',
-      timestamp: '2024-01-15 07:30',
-      priority: 'Medium'
-    },
-    {
-      id: 3,
-      type: 'Order Data',
-      device: 'Port Moresby Office',
-      records: 12,
-      status: 'Synced',
-      timestamp: '2024-01-15 10:30',
-      priority: 'High'
-    },
-    {
-      id: 4,
-      type: 'System Data',
-      device: 'Lae Warehouse',
-      records: 8,
-      status: 'Synced',
-      timestamp: '2024-01-15 10:25',
-      priority: 'Low'
-    }
-  ];
+  // Use real devices data or fallback to empty array
+  const devices = devicesData?.devices || [];
+  
+  // Use real sync queue data or fallback to empty array
+  const syncQueue = syncQueueData?.queue || [];
 
   const conflicts = [
     {

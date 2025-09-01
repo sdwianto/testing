@@ -38,7 +38,7 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
   const [timeRange, setTimeRange] = useState('30');
   const [equipmentFilter, setEquipmentFilter] = useState('all');
 
-  // tRPC queries
+  // tRPC queries - Equipment & Maintenance
   const { data: equipmentData, isLoading: equipmentLoading } = trpc.ops.listEquipment.useQuery({ 
     limit: 1000 
   });
@@ -62,16 +62,25 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
     equipmentId: equipmentFilter === 'all' ? undefined : equipmentFilter,
   });
 
+  // tRPC queries - Rental Data
+  const { data: rentalData, isLoading: rentalLoading } = trpc.rental.listRentals.useQuery({
+    limit: 100,
+  });
+
+  const { data: rentalMetrics, isLoading: rentalMetricsLoading } = trpc.rental.getRentalMetrics.useQuery(undefined, {
+    staleTime: 60 * 1000,
+  });
+
   // const { data: lifecycleAnalytics, isLoading: lifecycleLoading } = trpc.ops.getLifecycleAnalytics.useQuery({
   //   timeRange: 365,
   // });
 
   const isLoading = equipmentLoading || workOrdersLoading || maintenanceLoading || 
-                   performanceLoading || maintenanceMetricsLoading;
+                   performanceLoading || maintenanceMetricsLoading || rentalLoading || rentalMetricsLoading;
 
   // Calculate statistics
   const stats = useMemo(() => {
-    if (!equipmentData || !workOrdersData || !maintenanceSchedules) return null;
+    if (!equipmentData || !workOrdersData || !maintenanceSchedules || !rentalData) return null;
 
     const totalEquipment = equipmentData.equipment?.length || 0;
     const activeEquipment = equipmentData.equipment?.filter((eq: any) => eq.currentStatus === 'ACTIVE').length || 0;
@@ -84,6 +93,15 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
       new Date(s.nextMaintenanceDate) < new Date()
     ).length || 0;
 
+    // Rental statistics
+    const totalRentals = rentalData.rentals?.length || 0;
+    const activeRentals = rentalData.rentals?.filter((r: any) => r.status === 'ACTIVE').length || 0;
+    const completedRentals = rentalData.rentals?.filter((r: any) => r.status === 'COMPLETED').length || 0;
+    const overdueRentals = rentalData.rentals?.filter((r: any) => r.status === 'OVERDUE').length || 0;
+    const totalRentalRevenue = rentalData.rentals?.reduce((sum: number, r: any) => 
+      sum + (r.rentalBills?.reduce((billSum: number, bill: any) => billSum + bill.totalAmount, 0) || 0), 0
+    ) || 0;
+
     return {
       totalEquipment,
       activeEquipment,
@@ -93,8 +111,13 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
       completedWorkOrders,
       totalSchedules,
       overdueSchedules,
+      totalRentals,
+      activeRentals,
+      completedRentals,
+      overdueRentals,
+      totalRentalRevenue,
     };
-  }, [equipmentData, workOrdersData, maintenanceSchedules]);
+  }, [equipmentData, workOrdersData, maintenanceSchedules, rentalData]);
 
   // const getPerformanceStatus = (value: number, type: 'utilization' | 'availability') => {
   //   if (type === 'utilization') {
@@ -189,10 +212,10 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <DollarSign className="h-4 w-4 text-blue-500" />
               <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Open Work Orders</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats?.openWorkOrders || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Rentals</p>
+                <p className="text-2xl font-bold text-blue-600">{stats?.activeRentals || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -201,10 +224,10 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Clock className="h-4 w-4 text-red-500" />
+              <TrendingUp className="h-4 w-4 text-purple-500" />
               <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Overdue Maintenance</p>
-                <p className="text-2xl font-bold text-red-600">{stats?.overdueSchedules || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Rental Revenue</p>
+                <p className="text-2xl font-bold text-purple-600">${stats?.totalRentalRevenue?.toLocaleString() || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -245,6 +268,59 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
                 <div className="ml-2">
                   <p className="text-sm font-medium text-muted-foreground">Total Runtime</p>
                   <p className="text-2xl font-bold text-purple-600">{performanceMetrics.totalOperatingHours.toLocaleString()}h</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Rental Metrics */}
+      {rentalMetrics && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center">
+                <DollarSign className="h-4 w-4 text-green-500" />
+                <div className="ml-2">
+                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                  <p className="text-2xl font-bold text-green-600">${rentalMetrics.totalRevenue?.toLocaleString() || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center">
+                <Package className="h-4 w-4 text-blue-500" />
+                <div className="ml-2">
+                  <p className="text-sm font-medium text-muted-foreground">Equipment Utilization</p>
+                  <p className="text-2xl font-bold text-blue-600">{rentalMetrics.equipmentUtilization}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 text-orange-500" />
+                <div className="ml-2">
+                  <p className="text-sm font-medium text-muted-foreground">Avg Duration</p>
+                  <p className="text-2xl font-bold text-orange-600">{rentalMetrics.averageRentalDuration} days</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <div className="ml-2">
+                  <p className="text-sm font-medium text-muted-foreground">Overdue Rentals</p>
+                  <p className="text-2xl font-bold text-red-600">{rentalMetrics.overdueRentals || 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -331,6 +407,37 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
           </CardContent>
         </Card>
 
+        {/* Active Rentals */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Active Rentals</h3>
+              <p className="text-sm text-muted-foreground">Current rental contracts and their status</p>
+            </div>
+            <div className="space-y-4">
+              {rentalData?.rentals?.filter((r: any) => r.status === 'ACTIVE').slice(0, 5).map((rental: any) => (
+                <div key={rental.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-muted/50">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                    <DollarSign className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{rental.rentalNumber}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {rental.equipment?.code} - {rental.customer?.name}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium">${rental.dailyRate}/day</div>
+                    <div className="text-xs text-muted-foreground">
+                      Started {format(new Date(rental.startDate), 'MMM dd')}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Upcoming Maintenance */}
         <Card>
           <CardContent className="p-6">
@@ -405,39 +512,78 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
           </CardContent>
         </Card>
 
-        {/* Cost Analysis */}
+        {/* Work Order Status */}
         <Card>
           <CardContent className="p-6">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold">Cost Analysis</h3>
-              <p className="text-sm text-muted-foreground">Maintenance cost breakdown</p>
+              <h3 className="text-lg font-semibold">Work Order Status</h3>
+              <p className="text-sm text-muted-foreground">Current work order distribution</p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+                  <span className="text-sm font-medium dark:text-white">Open</span>
+                </div>
+                <span className="text-sm text-muted-foreground">{stats?.openWorkOrders || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="h-3 w-3 rounded-full bg-orange-500"></div>
+                  <span className="text-sm font-medium dark:text-white">In Progress</span>
+                </div>
+                <span className="text-sm text-muted-foreground">{stats?.inProgressWorkOrders || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm font-medium dark:text-white">Completed</span>
+                </div>
+                <span className="text-sm text-muted-foreground">{stats?.completedWorkOrders || 0}</span>
+              </div>
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium dark:text-white">Total Work Orders</span>
+                  <span className="text-sm font-semibold">{stats?.totalWorkOrders || 0}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rental Status */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Rental Status</h3>
+              <p className="text-sm text-muted-foreground">Current rental contract distribution</p>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                  <span className="text-sm font-medium dark:text-white">Labor</span>
+                  <span className="text-sm font-medium dark:text-white">Active</span>
                 </div>
-                <span className="text-sm text-muted-foreground">60%</span>
+                <span className="text-sm text-muted-foreground">{stats?.activeRentals || 0}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                  <span className="text-sm font-medium dark:text-white">Parts</span>
+                  <span className="text-sm font-medium dark:text-white">Completed</span>
                 </div>
-                <span className="text-sm text-muted-foreground">30%</span>
+                <span className="text-sm text-muted-foreground">{stats?.completedRentals || 0}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-3 w-3 rounded-full bg-orange-500"></div>
-                  <span className="text-sm font-medium dark:text-white">Materials</span>
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <span className="text-sm font-medium dark:text-white">Overdue</span>
                 </div>
-                <span className="text-sm text-muted-foreground">10%</span>
+                <span className="text-sm text-muted-foreground">{stats?.overdueRentals || 0}</span>
               </div>
               <div className="pt-4 border-t">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium dark:text-white">Total Cost</span>
-                  <span className="text-sm font-semibold">${maintenanceMetrics?.totalMaintenanceCost?.toLocaleString() || 0}</span>
+                  <span className="text-sm font-medium dark:text-white">Total Rentals</span>
+                  <span className="text-sm font-semibold">{stats?.totalRentals || 0}</span>
                 </div>
               </div>
             </div>
@@ -450,7 +596,7 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
         <CardContent className="p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Quick Actions</h3>
-            <p className="text-sm text-muted-foreground">Common operations and maintenance tasks</p>
+            <p className="text-sm text-muted-foreground">Common operations, maintenance, and rental tasks</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
@@ -462,12 +608,12 @@ export function ModernOperationsDashboard({ onSuccess: _onSuccess }: ModernOpera
               <span>Create Work Order</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <Calendar className="h-6 w-6" />
-              <span>Schedule Maintenance</span>
+              <DollarSign className="h-6 w-6" />
+              <span>New Rental</span>
             </Button>
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <BarChart3 className="h-6 w-6" />
-              <span>View Reports</span>
+              <Calendar className="h-6 w-6" />
+              <span>Schedule Maintenance</span>
             </Button>
           </div>
         </CardContent>

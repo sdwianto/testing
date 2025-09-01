@@ -24,19 +24,16 @@ interface ResponsiveShellProps {
 }
 
 export function ResponsiveShell({ children }: ResponsiveShellProps) {
-  const { data: session, status } = useSession();
-  const [isMobile, setIsMobile] = useState(false);
+  const { status } = useSession();
+  const [, setIsMobile] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // 1) REFERENCE ke container yang discroll
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // 2) DENGARKAN scroll pada container tsb, bukan window
-  const { scrollY } = useScroll({ container: scrollRef });
+  // 1) Use window scroll instead of container scroll to avoid hydration issues
+  const { scrollY } = useScroll();
 
   // Background semi-transparan bertahap (jangan 0.8, terlalu tebal)
   const bg = useTransform(
@@ -70,8 +67,7 @@ export function ResponsiveShell({ children }: ResponsiveShellProps) {
     console.log('container scrollY =', v);
   });
 
-  // Sidebar state - using default values since we can't access useSidebar here
-  const sidebarState = { open: true, isMobile: false };
+  // Sidebar state placeholder removed (not used here)
 
   // Search queries
   const { data: searchResults = [], isLoading: isSearchLoading } = trpc.core.search.global.useQuery(
@@ -334,11 +330,8 @@ export function ResponsiveShell({ children }: ResponsiveShellProps) {
           </div>
         </motion.header>
 
-        {/* 4) CONTAINER SCROLL → pakai ref & overflow-y-auto */}
-        <div
-          ref={scrollRef}
-          className="flex-1 pt-16 overflow-y-auto h-[calc(100vh-4rem)]"
-        >
+        {/* 4) CONTENT AREA */}
+        <div className="flex-1 pt-16">
           {children}
         </div>
       </DashboardLayout>

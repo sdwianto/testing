@@ -399,16 +399,127 @@ export const coreRouter = router({
     .query(async ({ ctx, input }) => {
       // Mock users data - in real implementation, this would come from database
       const users = [
-        { id: 'user-1', name: 'John Doe', role: 'OPERATOR' },
-        { id: 'user-2', name: 'Jane Smith', role: 'MANAGER' },
-        { id: 'user-3', name: 'Bob Johnson', role: 'OPERATOR' },
-        { id: 'user-4', name: 'Alice Brown', role: 'ADMIN' },
+        { id: 'user-1', name: 'John Doe', role: 'OPERATOR', isActive: true, lastLogin: '2024-03-10 14:30' },
+        { id: 'user-2', name: 'Jane Smith', role: 'MANAGER', isActive: true, lastLogin: '2024-03-10 13:45' },
+        { id: 'user-3', name: 'Bob Johnson', role: 'OPERATOR', isActive: true, lastLogin: '2024-03-10 12:15' },
+        { id: 'user-4', name: 'Alice Brown', role: 'ADMIN', isActive: false, lastLogin: '2024-03-08 16:20' },
       ];
 
       if (input.role) {
-        return users.filter(user => user.role === input.role);
+        return { users: users.filter(user => user.role === input.role) };
       }
 
-      return users;
+      return { users };
+    }),
+
+  // Recent Activities for Dashboard
+  getRecentActivities: protectedProcedure
+    .input(z.object({
+      limit: z.number().min(1).max(100).default(10),
+    }))
+    .query(async ({ ctx, input }) => {
+      // Get recent audit events as activities
+      const recentEvents = await AuditService.getAuditEvents(
+        ctx.tenantId,
+        {},
+        input.limit
+      );
+
+      // Transform audit events to activities format
+      const activities = recentEvents.map((event: any) => ({
+        id: event.id,
+        type: event.action.toLowerCase().includes('order') ? 'order' : 
+              event.action.toLowerCase().includes('customer') ? 'crm' : 'system',
+        message: `${event.action}: ${event.entity} ${event.entityId}`,
+        time: new Date(event.createdAt).toLocaleString(),
+        status: event.action.toLowerCase().includes('create') ? 'info' :
+               event.action.toLowerCase().includes('update') ? 'success' :
+               event.action.toLowerCase().includes('delete') ? 'warning' : 'info'
+      }));
+
+      return { activities };
+    }),
+
+  // System Configuration
+  getSystemConfig: protectedProcedure
+    .query(async ({ ctx }) => {
+      // Mock system config data - in real implementation, this would come from database
+      return {
+        systemUptime: '99.8%',
+        lastBackup: '2024-03-10 02:00',
+        nextBackup: '2024-03-11 02:00',
+        databaseSize: '2.4 GB',
+        storageUsed: '68%'
+      };
+    }),
+
+  // Sync Status
+  getSyncStatus: protectedProcedure
+    .query(async ({ ctx }) => {
+      // Mock sync status data - in real implementation, this would come from database
+      return {
+        syncedToday: 1247,
+        conflicts: 3
+      };
+    }),
+
+  // Devices
+  getDevices: protectedProcedure
+    .query(async ({ ctx }) => {
+      // Mock devices data - in real implementation, this would come from database
+      return {
+        devices: [
+          {
+            id: 1,
+            name: 'Port Moresby Office',
+            type: 'Desktop',
+            status: 'Online',
+            lastSync: '2024-01-15 10:30',
+            pendingRecords: 0,
+            syncProgress: 100,
+            location: 'Port Moresby',
+            ip: '192.168.1.100'
+          },
+          {
+            id: 2,
+            name: 'Lae Warehouse',
+            type: 'Desktop',
+            status: 'Online',
+            lastSync: '2024-01-15 10:25',
+            pendingRecords: 0,
+            syncProgress: 100,
+            location: 'Lae',
+            ip: '192.168.1.101'
+          }
+        ]
+      };
+    }),
+
+  // Sync Queue
+  getSyncQueue: protectedProcedure
+    .query(async ({ ctx }) => {
+      // Mock sync queue data - in real implementation, this would come from database
+      return {
+        queue: [
+          {
+            id: 1,
+            type: 'Customer Data Update',
+            device: 'Mount Hagen Site',
+            records: 45,
+            status: 'Pending',
+            timestamp: '2024-01-15 08:15',
+            priority: 'High'
+          },
+          {
+            id: 2,
+            type: 'Customer Data',
+            device: 'Goroka Field Office',
+            records: 23,
+            status: 'Pending',
+            timestamp: '2024-01-15 07:30',
+            priority: 'Medium'
+          }
+        ]
+      };
     }),
 });

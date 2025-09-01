@@ -160,9 +160,9 @@ function DataTable<T extends Record<string, unknown>>({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted">
-              {columns.map((column) => (
+              {columns.map((column, columnIndex) => (
                 <TableHead
-                  key={String(column.key)}
+                  key={column.key || `column-${columnIndex}`}
                   className={cn(
                     "font-medium text-muted-foreground",
                     column.sortable && "cursor-pointer hover:bg-muted/50",
@@ -195,9 +195,9 @@ function DataTable<T extends Record<string, unknown>>({
             ) : (
               filteredData.map((row, index) => (
                 <TableRow key={index} className="hover:bg-muted/50">
-                  {columns.map((column) => (
+                  {columns.map((column, columnIndex) => (
                     <TableCell
-                      key={String(column.key)}
+                      key={column.key || `column-${columnIndex}`}
                       className={cn("py-4", column.className)}
                     >
                       {renderCell(column, row)}

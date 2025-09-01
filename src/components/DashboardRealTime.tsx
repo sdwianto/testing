@@ -1,21 +1,30 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { trpc } from '@/lib/trpc';
 import { 
   Activity, 
   WifiOff
 } from 'lucide-react';
 
-interface DashboardMetrics {
-  activeOrders: number;
-  pendingApprovals: number;
-}
-
 export const DashboardRealTime: React.FC = () => {
-  const metrics: DashboardMetrics = {
-    activeOrders: 45,
-    pendingApprovals: 8,
-  };
+  // Real data from tRPC queries
+  const { data: ordersData } = trpc.purchase.listPurchaseOrders.useQuery({ limit: 100 });
+  
+  // Calculate real metrics
+  const metrics = useMemo(() => {
+    const activeOrders = ordersData?.orders?.filter((order: any) => 
+      order.status === 'OPEN' || order.status === 'IN_PROGRESS'
+    ).length || 0;
+    const pendingApprovals = ordersData?.orders?.filter((order: any) => 
+      order.status === 'PENDING_APPROVAL'
+    ).length || 0;
+
+    return {
+      activeOrders,
+      pendingApprovals,
+    };
+  }, [ordersData]);
 
   return (
     <div className="space-y-6">
@@ -47,7 +56,7 @@ export const DashboardRealTime: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Running in development mode with mock data
+              Real-time data from database
             </div>
           </CardContent>
         </Card>

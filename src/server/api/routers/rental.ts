@@ -564,4 +564,102 @@ export const rentalRouter = router({
         nextCursor,
       };
     }),
+
+  // Rental Metrics for Dashboard (Performance Rule: R1 cursor pagination, R2 tenant-scoped)
+  getRentalMetrics: protectedProcedure
+    .query(async ({ ctx }) => {
+      // R2: All queries tenant-scoped and indexed
+      const [
+        totalActiveRentals,
+        totalRevenue,
+        overdueRentals,
+        pendingPayments,
+        equipmentStats
+      ] = await Promise.all([
+        // Count active rentals
+        ctx.prisma.equipmentRental.count({
+          where: {
+            tenantId: ctx.tenantId,
+            status: 'ACTIVE'
+          }
+        }),
+        
+        // Calculate total revenue from rental bills (billed or paid)
+        ctx.prisma.rentalBill.aggregate({
+          where: {
+            tenantId: ctx.tenantId,
+            status: { in: ['SENT', 'PAID', 'OVERDUE'] },
+          },
+          _sum: { totalAmount: true },
+        }),
+        
+        // Count overdue rentals
+        ctx.prisma.equipmentRental.count({
+          where: {
+            tenantId: ctx.tenantId,
+            status: 'OVERDUE'
+          }
+        }),
+        
+        // Calculate pending payments (billed but unpaid/partially paid)
+        ctx.prisma.rentalBill.aggregate({
+          where: {
+            tenantId: ctx.tenantId,
+            status: { in: ['SENT', 'OVERDUE'] },
+            balanceDue: { gt: 0 },
+          },
+          _sum: { balanceDue: true },
+        }),
+        
+        // Equipment utilization stats
+        ctx.prisma.equipment.findMany({
+          where: {
+            tenantId: ctx.tenantId,
+          },
+          select: {
+            id: true,
+            equipmentRentals: {
+              where: {
+                status: { in: ['ACTIVE', 'COMPLETED'] },
+              },
+              select: {
+                id: true,
+                status: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
+          },
+        }),
+      ]);
+
+      // Calculate equipment utilization percentage
+      const totalEquipment = equipmentStats.length;
+      const rentedEquipment = equipmentStats.filter((eq: any) =>
+        eq.equipmentRentals.some((rental: any) => rental.status === 'ACTIVE')
+      ).length;
+      const equipmentUtilization = totalEquipment > 0 ? (rentedEquipment / totalEquipment) * 100 : 0;
+
+      // Calculate average rental duration (in days)
+      const completedRentals = equipmentStats.flatMap((eq: any) =>
+        eq.equipmentRentals.filter((rental: any) => rental.endDate)
+      );
+      const totalDuration = completedRentals.reduce((sum, rental) => {
+        const start = new Date(rental.startDate);
+        const end = new Date(rental.endDate!);
+        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+        return sum + duration;
+      }, 0);
+      const averageRentalDuration = completedRentals.length > 0 ? 
+        totalDuration / completedRentals.length : 0;
+
+      return {
+        totalActiveRentals,
+        totalRevenue: Number(totalRevenue._sum.totalAmount || 0),
+        equipmentUtilization: Math.round(equipmentUtilization * 100) / 100,
+        averageRentalDuration: Math.round(averageRentalDuration * 100) / 100,
+        overdueRentals,
+        pendingPayments: Number(pendingPayments._sum.balanceDue || 0),
+      };
+    }),
 });

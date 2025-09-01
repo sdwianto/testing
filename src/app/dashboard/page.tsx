@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { ResponsiveShell } from '@/components/layouts/ResponsiveShell';
 import { DashboardRealTime } from '@/components/DashboardRealTime';
 import { OperationsDashboard } from '@/components/dashboard/OperationsDashboard';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { trpc } from '@/lib/trpc';
 import { 
   Building2,
   AlertTriangle,
@@ -19,27 +20,38 @@ import {
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
-  // Mock data for demonstration - only CRM and Orders remain
-  const stats = {
-    orders: {
-      activeOrders: 45,
-      pendingApprovals: 8,
-      completedThisMonth: 120
-    }
-  };
+  
+  // Real data from tRPC queries
+  const { data: ordersData } = trpc.purchase.listPurchaseOrders.useQuery({ limit: 100 });
+  const { data: recentActivitiesData } = trpc.core.getRecentActivities.useQuery({ limit: 10 });
 
-  // Maintenance alerts removed
+  // Calculate real statistics
+  const stats = useMemo(() => {
+    const activeOrders = ordersData?.orders?.filter((order: any) => 
+      order.status === 'OPEN' || order.status === 'IN_PROGRESS'
+    ).length || 0;
+    const pendingApprovals = ordersData?.orders?.filter((order: any) => 
+      order.status === 'PENDING_APPROVAL'
+    ).length || 0;
+    const completedThisMonth = ordersData?.orders?.filter((order: any) => {
+      const orderDate = new Date(order.createdAt);
+      const now = new Date();
+      return order.status === 'COMPLETED' && 
+             orderDate.getMonth() === now.getMonth() && 
+             orderDate.getFullYear() === now.getFullYear();
+    }).length || 0;
 
-  const recentActivities = [
-    { id: 1, type: 'order', message: 'New order received: Order #ORD-2024-001', time: '5 min ago', status: 'info' },
-    { id: 2, type: 'order', message: 'Order completed: Order #ORD-2024-002', time: '30 min ago', status: 'success' },
-    { id: 3, type: 'crm', message: 'New customer contact: ABC Company', time: '1 hour ago', status: 'info' },
-    { id: 4, type: 'order', message: 'Order approved: Order #ORD-2024-003', time: '2 hours ago', status: 'success' },
-    { id: 5, type: 'crm', message: 'Customer follow-up scheduled: XYZ Corp', time: '3 hours ago', status: 'info' },
-    { id: 6, type: 'order', message: 'Order processing: Order #ORD-2024-004', time: '4 hours ago', status: 'info' },
-    { id: 7, type: 'crm', message: 'Customer meeting completed: DEF Ltd', time: '5 hours ago', status: 'success' },
-    { id: 8, type: 'order', message: 'Order delivered: Order #ORD-2024-005', time: '6 hours ago', status: 'success' }
-  ];
+    return {
+      orders: {
+        activeOrders,
+        pendingApprovals,
+        completedThisMonth
+      }
+    };
+  }, [ordersData]);
+
+  // Use real recent activities or fallback to empty array
+  const recentActivities = recentActivitiesData?.activities || [];
 
   const getStatusIcon = (status: string) => {
     switch (status) {

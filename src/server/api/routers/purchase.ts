@@ -70,7 +70,7 @@ export const purchaseRouter = router({
       }
       
       return {
-        purchaseRequests,
+        requests: purchaseRequests,
         nextCursor,
       };
     }),
@@ -447,7 +447,7 @@ export const purchaseRouter = router({
       }
       
       return {
-        purchaseOrders,
+        orders: purchaseOrders,
         nextCursor,
       };
     }),

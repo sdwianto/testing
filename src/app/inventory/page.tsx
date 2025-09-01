@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy, useMemo } from 'react';
 import { ResponsiveShell } from '@/components/layouts/ResponsiveShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { trpc } from '@/lib/trpc';
 import { 
   Package, 
   TrendingUp, 
@@ -43,13 +44,34 @@ export default function InventoryPage() {
   const [showGIForm, setShowGIForm] = useState(false);
   const [showPRForm, setShowPRForm] = useState(false);
 
-  // Mock data for quick stats
-  const quickStats = {
-    totalItems: 1250,
-    lowStockItems: 23,
-    totalValue: 2450000,
-    pendingGRN: 8
-  };
+  // Real data from tRPC queries
+  const { data: itemsData } = trpc.inventory.listItems.useQuery({ limit: 1000 });
+  const { data: purchaseRequestsData } = trpc.purchase.listPurchaseRequests.useQuery({ limit: 100 });
+  
+  // Calculate real statistics
+  const quickStats = useMemo(() => {
+    const totalItems = itemsData?.items?.length || 0;
+    const lowStockItems = itemsData?.items?.filter((item: any) => 
+      item.branches?.some((branch: any) => 
+        branch.locations?.some((location: any) => location.quantity <= location.reorderPoint)
+      )
+    ).length || 0;
+    const totalValue = itemsData?.items?.reduce((sum: number, item: any) => 
+      sum + (item.branches?.reduce((branchSum: number, branch: any) => 
+        branchSum + (branch.locations?.reduce((locationSum: number, location: any) => 
+          locationSum + (location.quantity * (location.averageCost || 0)), 0) || 0), 0) || 0), 0
+    ) || 0;
+    const pendingGRN = purchaseRequestsData?.requests?.filter((pr: any) => 
+      pr.status === 'APPROVED' && pr.items?.some((item: any) => item.status === 'PENDING_GRN')
+    ).length || 0;
+
+    return {
+      totalItems,
+      lowStockItems,
+      totalValue,
+      pendingGRN
+    };
+  }, [itemsData, purchaseRequestsData]);
 
   return (
     <ResponsiveShell>

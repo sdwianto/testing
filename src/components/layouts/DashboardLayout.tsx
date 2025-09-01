@@ -462,7 +462,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="relative flex-1 overflow-auto p-6">
+        <main className="relative flex-1 p-6">
           <div className="md:hidden mb-4">
             <SidebarTrigger />
           </div>

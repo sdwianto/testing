@@ -1,39 +1,59 @@
 'use client';
 
-import { useState } from 'react';
-import { ModernDashboardTab } from '@/components/operations/ModernDashboardTab';
+import { useState, useMemo } from 'react';
+import { ModernOperationsDashboard } from '@/components/operations/ModernOperationsDashboard';
 import { ModernEquipmentTab } from '@/components/operations/ModernEquipmentTab';
+import { ModernRentalTab } from '@/components/operations/ModernRentalTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { trpc } from '@/lib/trpc';
 
 import { 
-  BarChart3, Package, Wrench, Clock, AlertTriangle, Plus
+  BarChart3, Package, Wrench, Clock, AlertTriangle, Plus, DollarSign
 } from 'lucide-react';
 
 // ========================================
-// MODERN OPERATIONS PAGE COMPONENT
+// OPERATIONS PAGE COMPONENT - CLEANED & SIMPLIFIED
 // Enterprise-grade Operations Management System
 // ========================================
 
 export function ModernOperationsPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Mock data for quick stats
-  const quickStats = {
-    totalEquipment: 45,
-    activeWorkOrders: 12,
-    maintenanceDue: 8,
-    criticalAlerts: 3
-  };
+  // Real data from tRPC queries
+  const { data: equipmentData } = trpc.ops.listEquipment.useQuery({ limit: 1000 });
+  const { data: workOrdersData } = trpc.ops.listWorkOrders.useQuery({ limit: 100 });
+  const { data: maintenanceSchedules } = trpc.ops.listMaintenanceSchedules.useQuery({ limit: 50 });
+
+  // Calculate real statistics
+  const quickStats = useMemo(() => {
+    const totalEquipment = equipmentData?.equipment?.length || 0;
+    const activeWorkOrders = workOrdersData?.workOrders?.filter((wo: any) => 
+      wo.status === 'OPEN' || wo.status === 'IN_PROGRESS'
+    ).length || 0;
+    const maintenanceDue = maintenanceSchedules?.schedules?.filter((s: any) => 
+      new Date(s.nextMaintenanceDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    ).length || 0;
+    const criticalAlerts = workOrdersData?.workOrders?.filter((wo: any) => 
+      wo.priority === 'HIGH' && (wo.status === 'OPEN' || wo.status === 'IN_PROGRESS')
+    ).length || 0;
+
+    return {
+      totalEquipment,
+      activeWorkOrders,
+      maintenanceDue,
+      criticalAlerts
+    };
+  }, [equipmentData, workOrdersData, maintenanceSchedules]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold dark:text-white dark:text-white">Operations</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage equipment, maintenance, and work orders</p>
+          <h1 className="text-3xl font-bold">Operations</h1>
+          <p className="text-muted-foreground">Manage equipment, maintenance, and work orders</p>
         </div>
         <div className="flex gap-2">
           <Button size="sm">
@@ -47,7 +67,7 @@ export function ModernOperationsPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Key Metrics - Clean and Valuable */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -98,27 +118,36 @@ export function ModernOperationsPage() {
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
+      {/* Main Content - Enhanced with Rental */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Dashboard
           </TabsTrigger>
           <TabsTrigger value="equipment" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
-            Equipment Management
+            Equipment
+          </TabsTrigger>
+          <TabsTrigger value="rental" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Rental
           </TabsTrigger>
         </TabsList>
         
-        {/* Dashboard Tab */}
+        {/* Operations Dashboard - Direct content, no nested tabs */}
         <TabsContent value="dashboard" className="space-y-4">
-          <ModernDashboardTab />
+          <ModernOperationsDashboard />
         </TabsContent>
         
-        {/* Equipment Management Tab */}
+        {/* Equipment Management */}
         <TabsContent value="equipment" className="space-y-4">
           <ModernEquipmentTab />
+        </TabsContent>
+        
+        {/* Rental Management - NEW */}
+        <TabsContent value="rental" className="space-y-4">
+          <ModernRentalTab />
         </TabsContent>
       </Tabs>
     </div>
